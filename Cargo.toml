@@ -1,0 +1,17 @@
+[package]
+name = "sider"
+version = "0.1.0"
+edition = "2021"
+authors = ["Pierre-Henri Bourdeau <phbasic@gmail.com>"]
+readme = "README.md"
+homepage = "https://github.com/bourdeau/sider/"
+repository = "https://github.com/bourdeau/sider/"
+license = "Apache-2.0"
+publish = true
+
+[dependencies]
+dirs = "6.0.0"
+tokio = { version = "1", features = ["full"] }
+
+[dev-dependencies]
+clippy = "0.0.302"
