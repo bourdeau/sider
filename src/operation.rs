@@ -8,14 +8,14 @@ pub async fn pong() -> String {
 
 pub async fn get_key(db: &Db, command: Command) -> String {
     let db_read = db.read().await;
-    match db_read.get(&command.key) {
+    match db_read.get(&command.keys[0]) {
         Some(value) => format!("{}\n", value),
         _ => "nil\n".to_string(),
     }
 }
 
 pub async fn set_key(db: &Db, command: Command) -> String {
-    let key = command.key.clone();
+    let key = command.keys[0].clone();
     let value = command.value.clone().unwrap();
     db.write().await.insert(key.clone(), value.clone());
 
@@ -27,7 +27,7 @@ pub async fn set_key(db: &Db, command: Command) -> String {
 }
 
 pub async fn delete_key(db: &Db, command: Command) -> String {
-    let key = command.key.clone();
+    let key = command.keys[0].clone();
     let mut db_write = db.write().await;
     match db_write.remove(&key) {
         Some(_) => format!("OK\n"),
