@@ -5,6 +5,7 @@ pub enum CommandType {
     SET,
     DELETE,
     FLUSHDB,
+    KEYS,
 }
 #[derive(Debug)]
 pub struct Command {
@@ -22,6 +23,7 @@ pub fn parse_command(command: &str) -> Result<Command, String> {
         "SET" => CommandType::SET,
         "DEL" => CommandType::DELETE,
         "FLUSHDB" => CommandType::FLUSHDB,
+        "KEYS" => CommandType::KEYS,
         _ => return Err(format!("Unknown command: {}", parts[0])),
     };
 
