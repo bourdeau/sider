@@ -94,7 +94,7 @@ fn test_key_regex() {
     send_command("SET first_name Alice\n");
     send_command("SET last_name Smith\n");
     send_command("SET age 32\n");
-
+  
     let response = send_command("KEYS *");
     assert!(response.contains("first_name"));
     assert!(response.contains("last_name"));
