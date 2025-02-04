@@ -20,8 +20,8 @@ pub async fn write_aof(command: Command) -> std::io::Result<()> {
 
     let command_value = command.value.unwrap();
     let formatted = format!(
-        "{:?} {} {} \n",
-        command.command_type, command.key, command_value
+        "{:?} {:?} {} \n",
+        command.command_type, command.keys, command_value
     );
 
     let file_path = log_path.join("appendonly.aof");
