@@ -1,6 +1,7 @@
 use crate::aof::write_aof;
 use crate::command::Command;
 use crate::database::Db;
+use regex::Regex;
 
 pub async fn pong() -> String {
     "PONG\n".to_string()
@@ -38,4 +39,52 @@ pub async fn delete_key(db: &Db, command: Command) -> String {
 pub async fn flush_db(db: &Db) -> String {
     db.write().await.clear();
     "OK\n".to_string()
+}
+
+/// Converts Redis-style glob pattern into a valid regex pattern
+// '*' becomes '.*'
+// '?' becomes '.'
+// '[' stays '[' (range starts)
+// ']' stays ']' (range ends)
+fn convert_redis_pattern_to_regex(pattern: &str) -> String {
+    let mut regex_pattern = String::from("^");
+
+    for c in pattern.chars() {
+        match c {
+            '*' => regex_pattern.push_str(".*"),
+            '?' => regex_pattern.push('.'),
+            '[' => regex_pattern.push('['),
+            ']' => regex_pattern.push(']'),
+            _ => regex_pattern.push_str(&regex::escape(&c.to_string())), // Escape other chars
+        }
+    }
+
+    regex_pattern.push('$');
+    regex_pattern
+}
+
+/// Returns keys matching the Redis-style pattern
+pub async fn get_keys(db: &Db, command: Command) -> String {
+    let pattern = command.keys[0].as_str();
+
+    // Convert Redis glob pattern to regex
+    let regex_pattern = convert_redis_pattern_to_regex(pattern);
+    let re = Regex::new(&regex_pattern).unwrap();
+
+    let mut results = vec![];
+
+    let db_read = db.read().await;
+    for key in db_read.keys() {
+        if re.is_match(key) {
+            results.push(key.clone());
+        }
+    }
+
+    results
+        .iter()
+        .enumerate()
+        .map(|(i, key)| format!("{}) \"{}\"", i + 1, key))
+        .collect::<Vec<String>>()
+        .join("\n")
+        + "\n"
 }

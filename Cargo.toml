@@ -11,6 +11,7 @@ publish = true
 
 [dependencies]
 dirs = "6.0.0"
+regex = "1.11.1"
 tokio = { version = "1.43.0", features = ["full"] }
 
 [dev-dependencies]
