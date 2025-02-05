@@ -30,7 +30,7 @@ SET first_name John
 | **SET**  | `SET key value` | `SET user:1 "John"` | `OK` |  | ✅ |
 | **GET**  | `GET key` | `GET user:1` | `"John"` |  | ✅ |
 | **DEL**  | `DEL key` | `DEL user:1` | `1` (if key existed) |  | ✅ |
-| **EXISTS** | `EXISTS key` | `EXISTS user:1` | `1` (exists) / `0` (not) | ✅ |   |
+| **EXISTS** | `EXISTS key` | `EXISTS user:1` | `1` (exists) / `0` (not) |  | ✅ |
 
 
 #### Expiration & Time-to-Live (For Caching, Sessions)

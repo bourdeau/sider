@@ -1,6 +1,6 @@
 use crate::command::{parse_command, CommandType};
 use crate::database::Db;
-use crate::operation::{delete_key, flush_db, get_key, get_keys, pong, set_key};
+use crate::operation::{delete_key, exists, flush_db, get_key, get_keys, pong, set_key};
 use std::error::Error;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
@@ -45,5 +45,6 @@ async fn process(command: String, db: &Db) -> String {
         CommandType::DELETE => delete_key(db, command).await,
         CommandType::FLUSHDB => flush_db(db).await,
         CommandType::KEYS => get_keys(db, command).await,
+        CommandType::EXISTS => exists(db, command).await,
     }
 }
