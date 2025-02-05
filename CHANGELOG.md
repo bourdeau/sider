@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.2.0](https://github.com/bourdeau/sider/compare/v0.1.0...v0.2.0) (2025-02-05)
+
+
+### Features
+
+* add build to CI ([#4](https://github.com/bourdeau/sider/issues/4)) ([2e86a73](https://github.com/bourdeau/sider/commit/2e86a73432ea0735833fa3b4a9ec1daeed78f43e))
+* DEL multiple keys ([#8](https://github.com/bourdeau/sider/issues/8)) ([e655f80](https://github.com/bourdeau/sider/commit/e655f80b17240f1a9769d59d3cc6a5408c1ad0a1))
+* delete multiple keys ([#10](https://github.com/bourdeau/sider/issues/10)) ([0bf7b43](https://github.com/bourdeau/sider/commit/0bf7b43aec4b17fa93f58c671e98d73732c20795))
+
+
+### Bug Fixes
+
+* upgrade tokio ([#6](https://github.com/bourdeau/sider/issues/6)) ([7ba1032](https://github.com/bourdeau/sider/commit/7ba103265f1bf3ffb7fae885a5057fd0aab79286))
+
 ## 0.1.0 (2025-02-04)
 
 
