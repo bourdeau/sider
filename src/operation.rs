@@ -17,7 +17,11 @@ pub async fn get_key(db: &Db, command: Command) -> String {
 
 pub async fn set_key(db: &Db, command: Command) -> String {
     let key = command.keys[0].clone();
-    let value = command.value.clone().unwrap();
+    let value = match command.value.clone() {
+        Some(value) => value,
+        None => return "Error: Value is required\n".to_string(),
+    };
+
     db.write().await.insert(key.clone(), value.clone());
 
     write_aof(command)
@@ -31,7 +35,7 @@ pub async fn delete_key(db: &Db, command: Command) -> String {
     let key = command.keys[0].clone();
     let mut db_write = db.write().await;
     match db_write.remove(&key) {
-        Some(_) => format!("OK\n"),
+        Some(_) => "OK\n".to_string(),
         _ => "nil\n".to_string(),
     }
 }
@@ -69,7 +73,10 @@ pub async fn get_keys(db: &Db, command: Command) -> String {
 
     // Convert Redis glob pattern to regex
     let regex_pattern = convert_redis_pattern_to_regex(pattern);
-    let re = Regex::new(&regex_pattern).unwrap();
+    let re = match Regex::new(&regex_pattern) {
+        Ok(re) => re,
+        Err(e) => return format!("Error: {}\n", e),
+    };
 
     let mut results = vec![];
 

@@ -18,7 +18,12 @@ pub async fn write_aof(command: Command) -> std::io::Result<()> {
         fs::create_dir_all(&log_path)?;
     }
 
-    let command_value = command.value.unwrap();
+    // todo: handle command value error, should't crash the program
+    let command_value = match command.value {
+        Some(value) => value,
+        None => panic!("Command value is required"),
+    };
+
     let formatted = format!(
         "{:?} {:?} {} \n",
         command.command_type, command.keys, command_value

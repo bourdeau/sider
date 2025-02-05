@@ -40,10 +40,10 @@ async fn process(command: String, db: &Db) -> String {
 
     match command.command_type {
         CommandType::PONG => pong().await,
-        CommandType::GET => get_key(&db, command).await,
-        CommandType::SET => set_key(&db, command).await,
-        CommandType::DELETE => delete_key(&db, command).await,
-        CommandType::FLUSHDB => flush_db(&db).await,
-        CommandType::KEYS => get_keys(&db, command).await,
+        CommandType::GET => get_key(db, command).await,
+        CommandType::SET => set_key(db, command).await,
+        CommandType::DELETE => delete_key(db, command).await,
+        CommandType::FLUSHDB => flush_db(db).await,
+        CommandType::KEYS => get_keys(db, command).await,
     }
 }
