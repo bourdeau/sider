@@ -73,7 +73,6 @@ fn test_delete_key() {
 #[test]
 fn test_delete_multiple_keys() {
     let mut server = start_server();
-    std::thread::sleep(std::time::Duration::from_secs(1));
 
     send_command("SET first_name Alice");
     send_command("SET last_name Smith");
@@ -89,7 +88,6 @@ fn test_delete_multiple_keys() {
 #[test]
 fn test_key_regex() {
     let mut server = start_server();
-    std::thread::sleep(std::time::Duration::from_secs(1));
 
     send_command("SET first_name Alice\n");
     send_command("SET last_name Smith\n");
@@ -108,6 +106,29 @@ fn test_key_regex() {
 
     let response = send_command("KEYS f?rst_name\n");
     assert!(response.contains("first_name"));
+
+    stop_server(&mut server);
+}
+
+#[test]
+fn test_exists() {
+    let mut server = start_server();
+
+    send_command("SET first_name Alice");
+    send_command("SET last_name Smith");
+    send_command("SET age 32");
+
+    let response = send_command("EXISTS first_name");
+    assert!(response.contains("1"));
+
+    let response = send_command("EXISTS middle_name");
+    assert!(response.contains("0"));
+
+    let response = send_command("EXISTS first_name last_name middle_name");
+    assert!(response.contains("2"));
+
+    let response = send_command("EXISTS first_name last_name age");
+    assert!(response.contains("3"));
 
     stop_server(&mut server);
 }

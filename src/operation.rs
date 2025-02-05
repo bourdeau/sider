@@ -95,3 +95,13 @@ pub async fn get_keys(db: &Db, command: Command) -> String {
         .join("\n")
         + "\n"
 }
+
+pub async fn exists(db: &Db, command: Command) -> String {
+    let db_read = db.read().await;
+    let nb_keys = command
+        .keys
+        .iter()
+        .filter(|key| db_read.contains_key(*key))
+        .count();
+    format!("{}\n", nb_keys)
+}
