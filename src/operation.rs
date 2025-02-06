@@ -122,9 +122,19 @@ pub async fn expire(db: &Db, command: Command) -> String {
 
     match db_write.get_mut(&key.name) {
         Some(key) => {
-            key.expires_at = Some(ttl);
+            key.set_ttl(ttl);
             "(integer) 1\n".to_string()
         }
         None => "(integer) 0\n".to_string(),
     }
+}
+
+pub async fn ttl(db: &Db, command: Command) -> String {
+    let db_read = db.read().await;
+    let key = match db_read.get(&command.keys[0].name) {
+        Some(key) => key,
+        None => return "(integer) -2\n".to_string(),
+    };
+
+    format!("(integer) {}\n", key.get_ttl())
 }

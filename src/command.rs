@@ -10,6 +10,7 @@ pub enum CommandType {
     KEYS,
     EXISTS,
     EXPIRE,
+    TTL,
 }
 #[derive(Debug)]
 pub struct Command {
@@ -41,9 +42,13 @@ impl Key {
     }
 
     pub fn get_ttl(&self) -> i64 {
-        self.expires_at.map_or(-1, |expires_at| expires_at - self.get_current_timestamp())
+        let current_ts = self.get_current_timestamp();
+        println!("Current Timestamp: {}", current_ts);
+        println!("Expires At: {:?}", self.expires_at);
+    
+        self.expires_at.map_or(-1, |expires_at| expires_at - current_ts)
     }
-
+    
     pub fn set_ttl(&mut self, ttl: i64) {
         self.expires_at = Some(self.get_current_timestamp() + ttl);
     }
@@ -61,6 +66,7 @@ pub fn parse_command(command: &str) -> Result<Command, String> {
         "KEYS" => CommandType::KEYS,
         "EXISTS" => CommandType::EXISTS,
         "EXPIRE" => CommandType::EXPIRE,
+        "TTL" => CommandType::TTL,
         _ => return Err(format!("Unknown command: {}", parts[0])),
     };
 
@@ -81,11 +87,14 @@ pub fn parse_command(command: &str) -> Result<Command, String> {
     if command_type == CommandType::EXPIRE && keys.len() < 2 {
         return error;
     }
+    if command_type == CommandType::TTL && keys.is_empty() {
+        return error;
+    }
 
     let key_objects = match command_type {
         CommandType::PONG | CommandType::FLUSHDB => vec![],
         CommandType::SET | CommandType::EXISTS => vec![Key::new(keys[0].clone(), keys[1].clone(), None)],
-        CommandType::GET | CommandType::KEYS => vec![Key {
+        CommandType::GET | CommandType::KEYS | CommandType::TTL => vec![Key {
             name: keys[0].clone(),
             ..Default::default()
         }],
