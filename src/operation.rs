@@ -159,12 +159,7 @@ pub async fn ttl(db: &Db, command: Command) -> String {
     format!("(integer) {}\n", key.get_ttl())
 }
 
-// Increases the numeric value stored at the key by one.
-// If the key does not exist, it is initialized to 0 before
-// applying the operation. Returns an error if the key holds
-// a non-numeric value or a string that cannot be interpreted
-// as an integer.
-pub async fn incr(db: &Db, command: Command) -> String {
+async fn incr_decr(db: &Db, command: Command, inc: bool) -> String {
     let key_name = command.keys[0].name.clone();
 
     let mut db_write = db.write().await;
@@ -182,8 +177,28 @@ pub async fn incr(db: &Db, command: Command) -> String {
         return "ERR value is not an integer\n".to_string();
     };
 
-    let new_value = num + 1;
+    let new_value = if inc { num + 1 } else { num - 1 };
+
     key.value = Some(new_value.to_string());
 
     format!("(integer) {}\n", new_value)
+}
+
+// Increases the numeric value stored at the key by one.
+// If the key does not exist, it is initialized to 0 before
+// applying the operation. Returns an error if the key holds
+// a non-numeric value or a string that cannot be interpreted
+// as an integer.
+pub async fn incr(db: &Db, command: Command) -> String {
+    incr_decr(db, command, true).await
+}
+
+// Decrements the number stored at key by one.
+// If the key does not exist, it is set to 0 before performing
+// the operation. An error is returned if the key contains a value
+// of the wrong type or contains a string that can not be
+// represented as integer.
+// This operation is limited to 64 bit signed integers.
+pub async fn decr(db: &Db, command: Command) -> String {
+    incr_decr(db, command, false).await
 }

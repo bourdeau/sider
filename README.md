@@ -50,7 +50,7 @@ SET first_name John
 | Command  | Syntax | Example | Output | Done |
 |----------|--------|---------|--------|------|
 | **INCR**  | `INCR key` | `INCR api:requests` | `1`, `2`, `3`... | ✅ |
-| **DECR**  | `DECR key` | `DECR api:requests` | `2`, `1`, `0`... |   |
+| **DECR**  | `DECR key` | `DECR api:requests` | `2`, `1`, `0`... | ✅ |
 | **INCRBY** | `INCRBY key amount` | `INCRBY api:requests 5` | `5`, `10`, `15`... |   |
 
 

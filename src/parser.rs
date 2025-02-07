@@ -15,6 +15,7 @@ pub async fn parse_command(command: &str, restore: bool) -> Result<Command, Stri
         "EXPIRE" => CommandType::EXPIRE,
         "TTL" => CommandType::TTL,
         "INCR" => CommandType::INCR,
+        "DECR" => CommandType::DECR,
         _ => return Err(format!("Unknown command: {}", parts[0])),
     };
 
@@ -44,7 +45,11 @@ pub async fn parse_command(command: &str, restore: bool) -> Result<Command, Stri
         CommandType::SET => {
             vec![Key::new(keys[0].clone(), keys[1].clone(), None)]
         }
-        CommandType::GET | CommandType::KEYS | CommandType::TTL | CommandType::INCR => {
+        CommandType::GET
+        | CommandType::KEYS
+        | CommandType::TTL
+        | CommandType::INCR
+        | CommandType::DECR => {
             vec![Key {
                 name: keys[0].clone(),
                 ..Default::default()

@@ -12,6 +12,7 @@ pub enum CommandType {
     EXPIRE,
     TTL,
     INCR,
+    DECR,
 }
 #[derive(Debug)]
 pub struct Command {
