@@ -132,3 +132,37 @@ fn test_exists() {
 
     stop_server(&mut server);
 }
+
+#[test]
+fn test_expire() {
+    let mut server = start_server();
+
+    send_command("SET name Smith");
+    let response = send_command("EXPIRE name 3");
+    assert!(response.contains("(integer) 1"));
+
+    stop_server(&mut server);
+}
+
+#[test]
+fn test_ttl() {
+    let mut server = start_server();
+
+    send_command("SET name Smith");
+    send_command("EXPIRE name 3");
+
+    std::thread::sleep(std::time::Duration::from_secs(1));
+
+    // (integer) 2
+    let ttl = send_command("TTL name");
+
+    let ttl_int: i32 = ttl
+        .split_whitespace()
+        .last()
+        .and_then(|s| s.parse::<i32>().ok())
+        .expect("Failed to parse TTL value");
+
+    assert!(ttl_int < 3);
+
+    stop_server(&mut server);
+}
