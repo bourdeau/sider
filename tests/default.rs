@@ -1,47 +1,5 @@
-use std::io::{Read, Write};
-use std::net::TcpStream;
-use std::process::{Child, Command};
-use std::thread::sleep;
-use std::time::Duration;
-
-fn start_server() -> Child {
-    let child = Command::new("cargo")
-        .args(["run"])
-        .stdout(std::process::Stdio::null())
-        .stderr(std::process::Stdio::null())
-        .spawn()
-        .expect("Failed to start Redis-like server");
-
-    // Actively check if the server is ready before continuing
-    for _ in 0..20 {
-        if TcpStream::connect("127.0.0.1:6379").is_ok() {
-            return child;
-        }
-        sleep(Duration::from_millis(200)); // Wait before retrying
-    }
-
-    panic!("Server did not start in time");
-}
-
-fn stop_server(server: &mut Child) {
-    if let Err(e) = server.kill() {
-        eprintln!("Warning: Failed to kill server: {:?}", e);
-    }
-    let _ = server.wait(); // Ensure process cleanup
-    sleep(Duration::from_secs(1)); // Give OS time to release the port
-}
-
-fn send_command(command: &str) -> String {
-    let mut stream = TcpStream::connect("127.0.0.1:6379").expect("Failed to connect to server");
-    stream
-        .write_all(command.as_bytes())
-        .expect("Failed to send command");
-
-    let mut buffer = [0; 1024];
-    let n = stream.read(&mut buffer).expect("Failed to read response");
-
-    String::from_utf8_lossy(&buffer[..n]).to_string()
-}
+mod utils;
+use utils::{send_command, start_server, stop_server};
 
 #[test]
 fn test_basic_set_get() {
@@ -184,6 +142,21 @@ fn test_background_delete() {
 
     let response = send_command("EXISTS name");
     assert!(response.contains("0"));
+
+    stop_server(&mut server);
+}
+
+#[test]
+fn test_incr() {
+    let mut server = start_server();
+
+    // Create a key if it doesn't exist
+    let response = send_command("INCR counter");
+    assert!(response.contains("(integer) 1"));
+
+    // Increment the key
+    let response = send_command("INCR counter");
+    assert!(response.contains("(integer) 2"));
 
     stop_server(&mut server);
 }

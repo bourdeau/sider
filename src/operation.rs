@@ -158,3 +158,32 @@ pub async fn ttl(db: &Db, command: Command) -> String {
 
     format!("(integer) {}\n", key.get_ttl())
 }
+
+// Increases the numeric value stored at the key by one.
+// If the key does not exist, it is initialized to 0 before
+// applying the operation. Returns an error if the key holds
+// a non-numeric value or a string that cannot be interpreted
+// as an integer.
+pub async fn incr(db: &Db, command: Command) -> String {
+    let key_name = command.keys[0].name.clone();
+
+    let mut db_write = db.write().await;
+
+    let key = match db_write.get_mut(&key_name) {
+        Some(key) => key,
+        None => {
+            let key = Key::new(key_name.clone(), "0".to_string(), None);
+            db_write.insert(key_name.clone(), key);
+            db_write.get_mut(&key_name).expect("Key not found")
+        }
+    };
+
+    let Ok(num) = key.value.as_deref().unwrap_or("0").parse::<i64>() else {
+        return "ERR value is not an integer\n".to_string();
+    };
+
+    let new_value = num + 1;
+    key.value = Some(new_value.to_string());
+
+    format!("(integer) {}\n", new_value)
+}

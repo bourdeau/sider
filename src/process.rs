@@ -1,8 +1,9 @@
-use crate::command::{parse_command, CommandType};
+use crate::command::CommandType;
 use crate::database::Db;
+use crate::parser::parse_command;
 
 use crate::operation::{
-    delete_key, exists, expire, flush_db, get_key, get_keys, pong, set_key, ttl,
+    delete_key, exists, expire, flush_db, get_key, get_keys, incr, pong, set_key, ttl,
 };
 
 pub async fn process_command(command: String, db: &Db, restore: bool) -> String {
@@ -27,5 +28,6 @@ pub async fn process_command(command: String, db: &Db, restore: bool) -> String 
         CommandType::EXISTS => exists(db, command).await,
         CommandType::EXPIRE => expire(db, command).await,
         CommandType::TTL => ttl(db, command).await,
+        CommandType::INCR => incr(db, command).await,
     }
 }
