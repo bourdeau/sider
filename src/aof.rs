@@ -19,7 +19,7 @@ pub async fn write_aof(command: Command) -> std::io::Result<()> {
     }
 
     // todo: handle command value error, should't crash the program
-    let command_value = match command.value {
+    let command_value = match command.keys[0].value.clone() {
         Some(value) => value,
         None => panic!("Command value is required"),
     };

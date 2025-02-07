@@ -1,28 +1,50 @@
 use crate::aof::write_aof;
 use crate::command::Command;
+use crate::command::Key;
 use crate::database::Db;
 use regex::Regex;
+
+async fn delete_expired_key(db: &Db, key: Key) -> bool {
+    let mut db_write = db.write().await;
+
+    if key.is_expired() {
+        db_write.remove(&key.name);
+        return true;
+    }
+
+    false
+}
 
 pub async fn pong() -> String {
     "PONG\n".to_string()
 }
 
 pub async fn get_key(db: &Db, command: Command) -> String {
-    let db_read = db.read().await;
-    match db_read.get(&command.keys[0]) {
-        Some(value) => format!("{}\n", value),
-        _ => "nil\n".to_string(),
+    let key = {
+        let db_read = db.read().await;
+        db_read.get(&command.keys[0].name).cloned() // Clone key to release lock
+    };
+
+    let key = match key {
+        Some(k) => k,
+        None => return "nil\n".to_string(),
+    };
+
+    if let Some(value) = &key.value {
+        let deleted = delete_expired_key(db, key.clone()).await; // No read lock at this point
+
+        if !deleted {
+            return format!("{}\n", value);
+        }
     }
+
+    "nil\n".to_string()
 }
 
 pub async fn set_key(db: &Db, command: Command) -> String {
-    let key = command.keys[0].clone();
-    let value = match command.value.clone() {
-        Some(value) => value,
-        None => return "Error: Value is required\n".to_string(),
-    };
+    let key: Key = command.keys[0].clone();
 
-    db.write().await.insert(key.clone(), value.clone());
+    db.write().await.insert(key.name.clone(), key);
 
     write_aof(command)
         .await
@@ -32,9 +54,9 @@ pub async fn set_key(db: &Db, command: Command) -> String {
 }
 
 pub async fn delete_key(db: &Db, command: Command) -> String {
-    let key = command.keys[0].clone();
+    let key: Key = command.keys[0].clone();
     let mut db_write = db.write().await;
-    match db_write.remove(&key) {
+    match db_write.remove(&key.name) {
         Some(_) => "OK\n".to_string(),
         _ => "nil\n".to_string(),
     }
@@ -69,7 +91,7 @@ fn convert_redis_pattern_to_regex(pattern: &str) -> String {
 
 /// Returns keys matching the Redis-style pattern
 pub async fn get_keys(db: &Db, command: Command) -> String {
-    let pattern = command.keys[0].as_str();
+    let pattern = command.keys[0].name.as_str();
 
     // Convert Redis glob pattern to regex
     let regex_pattern = convert_redis_pattern_to_regex(pattern);
@@ -87,6 +109,10 @@ pub async fn get_keys(db: &Db, command: Command) -> String {
         }
     }
 
+    if results.is_empty() {
+        return "(empty array)\n".to_string();
+    }
+
     results
         .iter()
         .enumerate()
@@ -101,7 +127,40 @@ pub async fn exists(db: &Db, command: Command) -> String {
     let nb_keys = command
         .keys
         .iter()
-        .filter(|key| db_read.contains_key(*key))
+        .filter(|key| db_read.contains_key(&key.name))
         .count();
+
     format!("{}\n", nb_keys)
+}
+
+pub async fn expire(db: &Db, command: Command) -> String {
+    let key = match command.keys.first() {
+        Some(key) => key,
+        None => return "Error: No key provided\n".to_string(),
+    };
+
+    let ttl = match key.expires_at {
+        Some(ttl) => ttl,
+        None => return "Error: TTL is required\n".to_string(),
+    };
+
+    let mut db_write = db.write().await;
+
+    match db_write.get_mut(&key.name) {
+        Some(key) => {
+            key.set_ttl(ttl);
+            "(integer) 1\n".to_string()
+        }
+        None => "(integer) 0\n".to_string(),
+    }
+}
+
+pub async fn ttl(db: &Db, command: Command) -> String {
+    let db_read = db.read().await;
+    let key = match db_read.get(&command.keys[0].name) {
+        Some(key) => key,
+        None => return "(integer) -2\n".to_string(),
+    };
+
+    format!("(integer) {}\n", key.get_ttl())
 }
