@@ -37,8 +37,8 @@ SET first_name John
 
 | Command  | Syntax | Example | Output | Done |
 |----------|--------|---------|--------|------|
-| **EXPIRE** | `EXPIRE key seconds` | `EXPIRE user:1 3600` | `1` (success) |   |
-| **TTL**  | `TTL key` | `TTL user:1` | `3599` (seconds left) |   |
+| **EXPIRE** | `EXPIRE key seconds` | `EXPIRE user:1 3600` | `1` (success) | ✅ |
+| **TTL**  | `TTL key` | `TTL user:1` | `3599` (seconds left) | ✅ |
 
 
 #### Counters & Rate Limiting (For Throttling, Analytics)
