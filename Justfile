@@ -1,3 +1,7 @@
+
+start:
+  RUST_BACKTRACE=1 cargo run
+
 fmt:
     cargo check
     cargo fmt

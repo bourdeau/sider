@@ -1,22 +1,44 @@
-use regex::Regex;
 use crate::aof::write_aof;
 use crate::command::Command;
-use crate::database::Db;
 use crate::command::Key;
+use crate::database::Db;
+use regex::Regex;
+
+async fn delete_expired_key(db: &Db, key: Key) -> bool {
+    let mut db_write = db.write().await;
+
+    if key.is_expired() {
+        db_write.remove(&key.name);
+        return true;
+    }
+
+    false
+}
 
 pub async fn pong() -> String {
     "PONG\n".to_string()
 }
 
 pub async fn get_key(db: &Db, command: Command) -> String {
-    let db_read = db.read().await;
-    match db_read.get(&command.keys[0].name) {
-        Some(key) => match &key.value {
-            Some(val) => format!("{}\n", val),
-            None => "nil\n".to_string(),
-        },
-        None => "nil\n".to_string(),
+    let key = {
+        let db_read = db.read().await;
+        db_read.get(&command.keys[0].name).cloned() // Clone key to release lock
+    };
+
+    let key = match key {
+        Some(k) => k,
+        None => return "nil\n".to_string(),
+    };
+
+    if let Some(value) = &key.value {
+        let deleted = delete_expired_key(db, key.clone()).await; // No read lock at this point
+
+        if !deleted {
+            return format!("{}\n", value);
+        }
     }
+
+    "nil\n".to_string()
 }
 
 pub async fn set_key(db: &Db, command: Command) -> String {
@@ -103,7 +125,7 @@ pub async fn exists(db: &Db, command: Command) -> String {
         .iter()
         .filter(|key| db_read.contains_key(&key.name))
         .count();
-    
+
     format!("{}\n", nb_keys)
 }
 

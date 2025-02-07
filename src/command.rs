@@ -22,15 +22,15 @@ pub struct Command {
 pub struct Key {
     pub name: String,
     pub value: Option<String>,
-    pub expires_at: Option<i64>
+    pub expires_at: Option<i64>,
 }
 
 impl Key {
     pub fn new(name: String, value: String, expires_at: Option<i64>) -> Self {
-        Key { 
+        Key {
             name,
-            value: Some(value), 
-            expires_at
+            value: Some(value),
+            expires_at,
         }
     }
 
@@ -43,14 +43,18 @@ impl Key {
 
     pub fn get_ttl(&self) -> i64 {
         let current_ts = self.get_current_timestamp();
-        println!("Current Timestamp: {}", current_ts);
-        println!("Expires At: {:?}", self.expires_at);
-    
-        self.expires_at.map_or(-1, |expires_at| expires_at - current_ts)
+        self.expires_at
+            .map_or(-1, |expires_at| expires_at - current_ts)
     }
-    
+
     pub fn set_ttl(&mut self, ttl: i64) {
         self.expires_at = Some(self.get_current_timestamp() + ttl);
+    }
+
+    // A key without ttl return -1 and is not expired
+    pub fn is_expired(&self) -> bool {
+        let ttl = self.get_ttl();
+        ttl <= -2
     }
 }
 
@@ -75,7 +79,7 @@ pub fn parse_command(command: &str) -> Result<Command, String> {
         .skip(1)
         .map(|&s| s.to_string())
         .collect::<Vec<String>>();
-    
+
     let error = Err("ERR wrong number of arguments for command".to_string());
 
     if command_type == CommandType::SET && keys.len() < 2 {
@@ -93,22 +97,31 @@ pub fn parse_command(command: &str) -> Result<Command, String> {
 
     let key_objects = match command_type {
         CommandType::PONG | CommandType::FLUSHDB => vec![],
-        CommandType::SET | CommandType::EXISTS => vec![Key::new(keys[0].clone(), keys[1].clone(), None)],
+        CommandType::SET | CommandType::EXISTS => {
+            vec![Key::new(keys[0].clone(), keys[1].clone(), None)]
+        }
         CommandType::GET | CommandType::KEYS | CommandType::TTL => vec![Key {
             name: keys[0].clone(),
             ..Default::default()
         }],
-        CommandType::DELETE => keys.iter().map(|key| Key {
-            name: key.clone(),
-            ..Default::default()
-        }).collect(),
-        CommandType::EXPIRE => vec![Key {
-            name: keys[0].clone(),
-            expires_at: Some(keys[1].parse::<i64>().unwrap()),
-            ..Default::default()
-        }],
-
-    }; 
+        CommandType::DELETE => keys
+            .iter()
+            .map(|key| Key {
+                name: key.clone(),
+                ..Default::default()
+            })
+            .collect(),
+        CommandType::EXPIRE => {
+            let ttl = keys[1]
+                .parse::<i64>()
+                .map_err(|_| "ERR value is not an integer".to_string())?;
+            vec![Key {
+                name: keys[0].clone(),
+                expires_at: Some(ttl),
+                ..Default::default()
+            }]
+        }
+    };
 
     Ok(Command {
         command_type,

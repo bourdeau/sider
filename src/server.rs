@@ -1,6 +1,8 @@
 use crate::command::{parse_command, CommandType};
 use crate::database::Db;
-use crate::operation::{delete_key, exists, flush_db, get_key, get_keys, pong, set_key, expire, ttl};
+use crate::operation::{
+    delete_key, exists, expire, flush_db, get_key, get_keys, pong, set_key, ttl,
+};
 use std::error::Error;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
