@@ -35,7 +35,7 @@ async fn process(command: String, db: &Db) -> String {
         return "ERROR: Empty command\n".to_string();
     }
 
-    let command = match parse_command(&command) {
+    let command = match parse_command(&command).await {
         Ok(cmd) => cmd,
         Err(e) => return format!("ERROR: {}\n", e),
     };

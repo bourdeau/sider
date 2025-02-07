@@ -23,7 +23,7 @@ SET first_name John
 
 ### Commands
 
-#### Key-Value Storage (Essential for Caching, Sessions)
+#### Key-Value Storage
 
 | Command  | Syntax | Example | Output | Done |
 |----------|--------|---------|--------|------|
@@ -33,7 +33,9 @@ SET first_name John
 | **EXISTS** | `EXISTS key` | `EXISTS user:1` | `1` (exists) / `0` (not) | ✅ |
 
 
-#### Expiration & Time-to-Live (For Caching, Sessions)
+#### Expiration & Time-to-Live
+
+**Note:** expired key are deleted by calling `GET` or by a background task every 60 seconds.
 
 | Command  | Syntax | Example | Output | Done |
 |----------|--------|---------|--------|------|
@@ -41,7 +43,7 @@ SET first_name John
 | **TTL**  | `TTL key` | `TTL user:1` | `3599` (seconds left) | ✅ |
 
 
-#### Counters & Rate Limiting (For Throttling, Analytics)
+#### Counters & Rate Limiting
 
 | Command  | Syntax | Example | Output | Done |
 |----------|--------|---------|--------|------|
@@ -50,7 +52,7 @@ SET first_name John
 | **INCRBY** | `INCRBY key amount` | `INCRBY api:requests 5` | `5`, `10`, `15`... |   |
 
 
-#### Lists (For Background Jobs, Notifications, Queues)
+#### Lists
 
 | Command  | Syntax | Example | Output | Done |
 |----------|--------|---------|--------|------|
@@ -60,7 +62,7 @@ SET first_name John
 | **RPOP**  | `RPOP key` | `RPOP queue` | `"task2"` |   |
 
 
-#### Hashes (For Storing Objects Efficiently)
+#### Hashes
 
 | Command  | Syntax | Example | Output | Done |
 |----------|--------|---------|--------|------|
@@ -70,7 +72,7 @@ SET first_name John
 | **HGETALL** | `HGETALL key` | `HGETALL user:1` | `["name", "Alice"]` |   |
 
 
-#### Sets (For Unique Items, Tags, Sessions)
+#### Sets
 
 | Command  | Syntax | Example | Output | Done |
 |----------|--------|---------|--------|------|
@@ -79,7 +81,7 @@ SET first_name John
 | **SMEMBERS** | `SMEMBERS key` | `SMEMBERS online_users` | `["user2", "user3"]` |   |
 
 
-#### Miscellaneous (For Admin, Debugging)
+#### Miscellaneous
 
 | Command  | Syntax | Example | Output | Done |
 |----------|--------|---------|--------|------|

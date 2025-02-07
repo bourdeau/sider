@@ -1,4 +1,3 @@
-use crate::aof::write_aof;
 use crate::command::Command;
 use crate::command::Key;
 use crate::database::Db;
@@ -43,12 +42,7 @@ pub async fn get_key(db: &Db, command: Command) -> String {
 
 pub async fn set_key(db: &Db, command: Command) -> String {
     let key: Key = command.keys[0].clone();
-
     db.write().await.insert(key.name.clone(), key);
-
-    write_aof(command)
-        .await
-        .expect("Error writing to AOF file!");
 
     "OK\n".to_string()
 }

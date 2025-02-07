@@ -11,22 +11,22 @@ fn get_aof_log_dir() -> PathBuf {
     home.join(".local/share/sider")
 }
 
-pub async fn write_aof(command: Command) -> std::io::Result<()> {
+pub async fn write_aof(command: &Command) -> std::io::Result<()> {
     let log_path = get_aof_log_dir();
 
     if !log_path.exists() {
         fs::create_dir_all(&log_path)?;
     }
 
-    // todo: handle command value error, should't crash the program
-    let command_value = match command.keys[0].value.clone() {
-        Some(value) => value,
-        None => panic!("Command value is required"),
-    };
+    let keys_value = command.keys
+    .iter()
+    .map(|key| key.get_name_value_as_string())
+    .collect::<Vec<_>>()
+    .join(" ");
 
     let formatted = format!(
-        "{:?} {:?} {} \n",
-        command.command_type, command.keys, command_value
+        "{:?} {}\n",
+        command.command_type, keys_value
     );
 
     let file_path = log_path.join("appendonly.aof");
