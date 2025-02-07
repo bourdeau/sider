@@ -158,5 +158,26 @@ fn test_incr() {
     let response = send_command("INCR counter");
     assert!(response.contains("(integer) 2"));
 
+    let response = send_command("GET counter");
+    assert!(response.contains("2"));
+
+    stop_server(&mut server);
+}
+
+#[test]
+fn test_decr() {
+    let mut server = start_server();
+
+    // Create a key if it doesn't exist
+    let response = send_command("DECR another_counter");
+    assert!(response.contains("(integer) -1"));
+
+    // Decrement the key
+    let response = send_command("DECR another_counter");
+    assert!(response.contains("(integer) -2"));
+
+    let response = send_command("GET another_counter");
+    assert!(response.contains("-2"));
+
     stop_server(&mut server);
 }

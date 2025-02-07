@@ -3,7 +3,7 @@ use crate::database::Db;
 use crate::parser::parse_command;
 
 use crate::operation::{
-    delete_key, exists, expire, flush_db, get_key, get_keys, incr, pong, set_key, ttl,
+    decr, delete_key, exists, expire, flush_db, get_key, get_keys, incr, pong, set_key, ttl,
 };
 
 pub async fn process_command(command: String, db: &Db, restore: bool) -> String {
@@ -29,5 +29,6 @@ pub async fn process_command(command: String, db: &Db, restore: bool) -> String 
         CommandType::EXPIRE => expire(db, command).await,
         CommandType::TTL => ttl(db, command).await,
         CommandType::INCR => incr(db, command).await,
+        CommandType::DECR => decr(db, command).await,
     }
 }
