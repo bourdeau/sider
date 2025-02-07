@@ -6,7 +6,7 @@ use tokio::io::AsyncWriteExt;
 
 use crate::command::Command;
 
-fn get_aof_log_dir() -> PathBuf {
+pub fn get_aof_log_dir() -> PathBuf {
     let home = home_dir().expect("Failed to get home directory");
     home.join(".local/share/sider")
 }
@@ -18,16 +18,14 @@ pub async fn write_aof(command: &Command) -> std::io::Result<()> {
         fs::create_dir_all(&log_path)?;
     }
 
-    let keys_value = command.keys
-    .iter()
-    .map(|key| key.get_name_value_as_string())
-    .collect::<Vec<_>>()
-    .join(" ");
+    let keys_value = command
+        .keys
+        .iter()
+        .map(|key| key.get_name_value_as_string())
+        .collect::<Vec<_>>()
+        .join(" ");
 
-    let formatted = format!(
-        "{:?} {}\n",
-        command.command_type, keys_value
-    );
+    let formatted = format!("{:?} {}\n", command.command_type, keys_value);
 
     let file_path = log_path.join("appendonly.aof");
 

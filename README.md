@@ -21,6 +21,8 @@ SET first_name John
 
 ## Features
 
+`Sider` implements a basic `Append-Only File (AOF)` system. `AOF` persistence logs every write operation received by the server, allowing these operations to be replayed during startup to restore the original dataset. Currently, commands are not logged using the `RESP format`, and no cleanup mechanism has been implemented for the `AOF` file.
+
 ### Commands
 
 #### Key-Value Storage
