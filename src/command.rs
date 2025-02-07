@@ -13,6 +13,7 @@ pub enum CommandType {
     TTL,
     INCR,
     DECR,
+    INCRBY,
 }
 #[derive(Debug)]
 pub struct Command {

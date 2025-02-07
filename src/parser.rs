@@ -16,6 +16,7 @@ pub async fn parse_command(command: &str, restore: bool) -> Result<Command, Stri
         "TTL" => CommandType::TTL,
         "INCR" => CommandType::INCR,
         "DECR" => CommandType::DECR,
+        "INCRBY" => CommandType::INCRBY,
         _ => return Err(format!("Unknown command: {}", parts[0])),
     };
 
@@ -42,7 +43,7 @@ pub async fn parse_command(command: &str, restore: bool) -> Result<Command, Stri
 
     let key_objects = match command_type {
         CommandType::PONG | CommandType::FLUSHDB => vec![],
-        CommandType::SET => {
+        CommandType::SET | CommandType::INCRBY => {
             vec![Key::new(keys[0].clone(), keys[1].clone(), None)]
         }
         CommandType::GET
