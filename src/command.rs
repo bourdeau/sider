@@ -97,14 +97,14 @@ pub fn parse_command(command: &str) -> Result<Command, String> {
 
     let key_objects = match command_type {
         CommandType::PONG | CommandType::FLUSHDB => vec![],
-        CommandType::SET | CommandType::EXISTS => {
+        CommandType::SET => {
             vec![Key::new(keys[0].clone(), keys[1].clone(), None)]
         }
         CommandType::GET | CommandType::KEYS | CommandType::TTL => vec![Key {
             name: keys[0].clone(),
             ..Default::default()
         }],
-        CommandType::DELETE => keys
+        CommandType::DELETE | CommandType::EXISTS => keys
             .iter()
             .map(|key| Key {
                 name: key.clone(),
