@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.3.0](https://github.com/bourdeau/sider/compare/v0.2.0...v0.3.0) (2025-02-07)
+
+
+### Features
+
+* DECR ([#26](https://github.com/bourdeau/sider/issues/26)) ([b2b10c3](https://github.com/bourdeau/sider/commit/b2b10c3ea012341f76b03d905c085546907f76ec))
+* INCR ([#24](https://github.com/bourdeau/sider/issues/24)) ([a2aaf08](https://github.com/bourdeau/sider/commit/a2aaf0833d91e435cd7318bd76474dd321efd847))
+* INCRBY ([#27](https://github.com/bourdeau/sider/issues/27)) ([0b3b346](https://github.com/bourdeau/sider/commit/0b3b346647387e12e2062871c5b2fc42197aa09d))
+
 ## [0.2.0](https://github.com/bourdeau/sider/compare/v0.1.0...v0.2.0) (2025-02-07)
 
 
