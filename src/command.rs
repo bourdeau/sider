@@ -1,3 +1,4 @@
+use crate::aof::write_aof;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Debug, PartialEq)]
@@ -34,6 +35,13 @@ impl Key {
         }
     }
 
+    pub fn get_name_value_as_string(&self) -> String {
+        match &self.value {
+            Some(v) => format!("{} {}", self.name, v),
+            None => self.name.to_string(),
+        }
+    }
+
     fn get_current_timestamp(&self) -> i64 {
         SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -58,7 +66,7 @@ impl Key {
     }
 }
 
-pub fn parse_command(command: &str) -> Result<Command, String> {
+pub async fn parse_command(command: &str, restore: bool) -> Result<Command, String> {
     let parts: Vec<&str> = command.split_whitespace().collect();
 
     let command_type = match parts[0].to_uppercase().as_str() {
@@ -123,8 +131,16 @@ pub fn parse_command(command: &str) -> Result<Command, String> {
         }
     };
 
-    Ok(Command {
+    let command = Command {
         command_type,
         keys: key_objects,
-    })
+    };
+
+    if !restore {
+        write_aof(&command)
+            .await
+            .expect("Error writing to AOF file!");
+    }
+
+    Ok(command)
 }

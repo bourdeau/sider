@@ -1,4 +1,4 @@
-use sider::database::Db;
+use sider::database::{restore_from_aof, Db};
 use sider::server::handle_client;
 use std::collections::HashMap;
 use std::error::Error;
@@ -6,7 +6,7 @@ use std::sync::Arc;
 use tokio::net::TcpListener;
 use tokio::sync::RwLock;
 
-use sider::task::delete_expired_keys;
+use sider::database::delete_expired_keys;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -18,6 +18,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // Background task to delete expired keys
     // cloning Arc is cheap apparently
     tokio::spawn(delete_expired_keys(db.clone()));
+
+    // Restoring DB from AOF file
+    tokio::spawn(restore_from_aof(db.clone()));
 
     loop {
         let (socket, addr) = listener.accept().await?;

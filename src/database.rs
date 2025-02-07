@@ -1,7 +1,44 @@
+use crate::aof::get_aof_log_dir;
+use crate::command::Key;
+use crate::process::process_command;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-
-use crate::command::Key;
+use tokio::time::{self, Duration};
 
 pub type Db = Arc<RwLock<HashMap<String, Key>>>;
+
+pub async fn delete_expired_keys(db: Db) {
+    let mut interval = time::interval(Duration::from_secs(60));
+
+    loop {
+        interval.tick().await;
+
+        let mut db_write = db.write().await;
+        db_write.retain(|_, value| !value.is_expired());
+    }
+}
+
+pub async fn restore_from_aof(db: Db) {
+    println!("Restoring from AOF file");
+    let log_path = get_aof_log_dir();
+    let file_path = log_path.join("appendonly.aof");
+
+    if !file_path.exists() {
+        return;
+    }
+
+    let content = tokio::fs::read_to_string(file_path)
+        .await
+        .expect("Failed to read AOF file");
+
+    let commands: Vec<&str> = content.split("\n").collect();
+
+    for command in commands {
+        if command.is_empty() {
+            continue;
+        }
+        println!("Restoring command: {}", command);
+        process_command(command.to_string(), &db, false).await;
+    }
+}

@@ -1,0 +1,31 @@
+use crate::command::{parse_command, CommandType};
+use crate::database::Db;
+
+use crate::operation::{
+    delete_key, exists, expire, flush_db, get_key, get_keys, pong, set_key, ttl,
+};
+
+pub async fn process_command(command: String, db: &Db, restore: bool) -> String {
+    let parts: Vec<&str> = command.split_whitespace().collect();
+
+    if parts.is_empty() {
+        return "ERROR: Empty command\n".to_string();
+    }
+
+    let command = match parse_command(&command, restore).await {
+        Ok(cmd) => cmd,
+        Err(e) => return format!("ERROR: {}\n", e),
+    };
+
+    match command.command_type {
+        CommandType::PONG => pong().await,
+        CommandType::GET => get_key(db, command).await,
+        CommandType::SET => set_key(db, command).await,
+        CommandType::DELETE => delete_key(db, command).await,
+        CommandType::FLUSHDB => flush_db(db).await,
+        CommandType::KEYS => get_keys(db, command).await,
+        CommandType::EXISTS => exists(db, command).await,
+        CommandType::EXPIRE => expire(db, command).await,
+        CommandType::TTL => ttl(db, command).await,
+    }
+}
