@@ -109,6 +109,10 @@ pub async fn get_keys(db: &Db, command: Command) -> String {
         }
     }
 
+    if results.is_empty() {
+        return "(empty array)\n".to_string();
+    }
+
     results
         .iter()
         .enumerate()

@@ -89,23 +89,28 @@ fn test_delete_multiple_keys() {
 fn test_key_regex() {
     let mut server = start_server();
 
-    send_command("SET first_name Alice\n");
-    send_command("SET last_name Smith\n");
+    send_command("SET first_name Alice");
+    send_command("SET last_name Smith");
     send_command("SET age 32\n");
 
     let response = send_command("KEYS *");
     assert!(response.contains("first_name"));
     assert!(response.contains("last_name"));
 
-    let response = send_command("KEYS first*\n");
+    let response = send_command("KEYS first*");
     assert!(response.contains("first_name"));
 
-    let response = send_command("KEYS *name*\n");
+    let response = send_command("KEYS *name*");
     assert!(response.contains("first_name"));
     assert!(response.contains("last_name"));
 
-    let response = send_command("KEYS f?rst_name\n");
+    let response = send_command("KEYS f?rst_name");
     assert!(response.contains("first_name"));
+
+    send_command("FLUSHDB");
+
+    let response = send_command("KEYS *");
+    assert!(response.contains("(empty array)"));
 
     stop_server(&mut server);
 }
@@ -163,6 +168,22 @@ fn test_ttl() {
         .expect("Failed to parse TTL value");
 
     assert!(ttl_int < 3);
+
+    stop_server(&mut server);
+}
+
+#[test]
+fn test_background_delete() {
+    let mut server = start_server();
+
+    send_command("SET name Smith");
+    send_command("EXPIRE name 10");
+
+    // Background delete occurs every 60 secs
+    std::thread::sleep(std::time::Duration::from_secs(70));
+
+    let response = send_command("EXISTS name");
+    assert!(response.contains("0"));
 
     stop_server(&mut server);
 }
