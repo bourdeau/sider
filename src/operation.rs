@@ -202,3 +202,44 @@ pub async fn incr(db: &Db, command: Command) -> String {
 pub async fn decr(db: &Db, command: Command) -> String {
     incr_decr(db, command, false).await
 }
+
+// Increases the number stored at the given key by the specified
+// increment. If the key does not exist, it is initialized
+// to 0 before applying the operation. Returns an error
+// if the key holds a non-numeric value or a string that cannot
+// be parsed as a 64-bit signed integer.
+pub async fn incrby(db: &Db, command: Command) -> String {
+    let key = command.keys[0].clone();
+    let key_name = key.name.clone();
+
+    let by = match key.value.as_deref() {
+        Some(by) => by,
+        None => return "ERR value is not an integer\n".to_string(),
+    };
+
+    let by = match by.parse::<i64>() {
+        Ok(by) => by,
+        Err(_) => return "ERR value is not an integer\n".to_string(),
+    };
+
+    let mut db_write = db.write().await;
+
+    let key = match db_write.get_mut(&key_name) {
+        Some(key) => key,
+        None => {
+            let key = Key::new(key_name.clone(), "0".to_string(), None);
+            db_write.insert(key_name.clone(), key);
+            db_write.get_mut(&key_name).expect("Key not found")
+        }
+    };
+
+    let Ok(num) = key.value.as_deref().unwrap_or("0").parse::<i64>() else {
+        return "ERR value is not an integer\n".to_string();
+    };
+
+    let new_value = num + by;
+
+    key.value = Some(new_value.to_string());
+
+    format!("(integer) {}\n", new_value)
+}

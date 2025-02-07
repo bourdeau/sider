@@ -181,3 +181,25 @@ fn test_decr() {
 
     stop_server(&mut server);
 }
+
+#[test]
+fn test_incrby() {
+    let mut server = start_server();
+
+    // Create a key if it doesn't exist
+    let response = send_command("INCRBY incrby 5");
+    assert!(response.contains("(integer) 5"));
+
+    // Increment the key by 10
+    let response = send_command("INCRBY incrby 10");
+    assert!(response.contains("(integer) 15"));
+
+    let response = send_command("GET incrby");
+    assert!(response.contains("15"));
+
+    // Decrement the key by 100
+    let response = send_command("INCRBY incrby -100");
+    assert!(response.contains("(integer) -85"));
+
+    stop_server(&mut server);
+}
