@@ -284,3 +284,7 @@ pub async fn incrby(db: &Db, command: Command) -> String {
 
     format!("(integer) {}\n", new_value)
 }
+
+pub async fn lpush(db: &Db, command: Command) -> String {
+    "Ok".to_string()
+}

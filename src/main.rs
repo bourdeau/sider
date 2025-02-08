@@ -7,13 +7,17 @@ use tokio::net::TcpListener;
 use tokio::sync::RwLock;
 
 use sider::database::delete_expired_keys;
+use tracing::{info, error, instrument};
+use tracing_subscriber;
+
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
+    tracing_subscriber::fmt::init();
     let db: Db = Arc::new(RwLock::new(HashMap::new()));
 
     let listener = TcpListener::bind("127.0.0.1:6379").await?;
-    println!("Listening on 127.0.0.1:6379...");
+    info!("Listening on 127.0.0.1:6379...");
 
     // Background task to delete expired keys
     // cloning Arc is cheap apparently
@@ -24,7 +28,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     loop {
         let (socket, addr) = listener.accept().await?;
-        println!("New client connected: {}", addr);
+        info!("New client connected: {}", addr);
 
         // Clone the Arc for the new task
         let db = Arc::clone(&db);
@@ -32,7 +36,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         // Spawn a task to handle each client
         tokio::spawn(async move {
             if let Err(e) = handle_client(socket, db).await {
-                eprintln!("Error handling client {}: {:?}", addr, e);
+                error!("Error handling client {}: {:?}", addr, e);
             }
         });
     }
