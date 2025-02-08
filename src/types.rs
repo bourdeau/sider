@@ -1,0 +1,61 @@
+use std::collections::HashMap;
+use std::sync::Arc;
+use tokio::sync::RwLock;
+
+pub type Db = Arc<RwLock<HashMap<String, DbValue>>>;
+
+#[derive(Debug)]
+pub enum DbValue {
+    StringKey(Key),
+    ListKey(ListKey),
+}
+
+#[derive(Debug)]
+pub enum CommandArgs {
+    SingleKey(Key),
+    KeyWithValues(ListKey),
+    MultipleKeys(Vec<Key>),
+}
+
+#[derive(Debug)]
+pub struct Command {
+    pub command_type: CommandType,
+    pub args: CommandArgs,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct Key {
+    pub name: String,
+    pub value: Option<String>,
+    pub expires_at: Option<i64>,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct KeyList {
+    pub name: String,
+    pub values: Vec<String>,
+    pub expires_at: Option<i64>,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct ListKey {
+    pub name: String,
+    pub values: Vec<String>,
+    pub expires_at: Option<i64>,
+}
+
+#[derive(Debug, PartialEq, Eq, Hash)]
+pub enum CommandType {
+    PONG,
+    GET,
+    SET,
+    DELETE,
+    FLUSHDB,
+    KEYS,
+    EXISTS,
+    EXPIRE,
+    TTL,
+    INCR,
+    DECR,
+    INCRBY,
+}

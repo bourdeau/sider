@@ -1,6 +1,6 @@
 use crate::aof::get_aof_log_dir;
-use crate::command::Key;
 use crate::process::process_command;
+use crate::types::Key;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
