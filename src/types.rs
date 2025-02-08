@@ -4,7 +4,7 @@ use tokio::sync::RwLock;
 
 pub type Db = Arc<RwLock<HashMap<String, DbValue>>>;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum DbValue {
     StringKey(Key),
     ListKey(KeyList),
@@ -34,9 +34,7 @@ pub struct Key {
 pub struct KeyList {
     pub name: String,
     pub values: Vec<String>,
-    pub expires_at: Option<i64>,
 }
-
 
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub enum CommandType {

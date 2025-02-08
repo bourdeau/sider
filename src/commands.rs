@@ -158,15 +158,11 @@ pub fn build_incrby_command(args: &[String]) -> Result<Command, String> {
 }
 
 pub fn build_lpush_command(args: &[String]) -> Result<Command, String> {
-    let key_name = args[0].to_string();
-    let values = args.iter().skip(1).cloned().collect::<Vec<String>>();
-
     Ok(Command {
         command_type: CommandType::LPUSH,
         args: CommandArgs::KeyWithValues(KeyList {
-            name: key_name,
-            values: values,
-            ..Default::default()
+            name: args[0].to_string(),
+            values: args.iter().skip(1).cloned().collect::<Vec<String>>(),
         }),
     })
 }

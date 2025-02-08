@@ -7,9 +7,7 @@ use tokio::net::TcpListener;
 use tokio::sync::RwLock;
 
 use sider::database::delete_expired_keys;
-use tracing::{info, error, instrument};
-use tracing_subscriber;
-
+use tracing::{error, info};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {

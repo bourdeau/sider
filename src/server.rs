@@ -20,7 +20,7 @@ pub async fn handle_client(mut socket: TcpStream, db: Db) -> Result<(), Box<dyn 
         let command = String::from_utf8_lossy(&buffer[..bytes_read])
             .trim()
             .to_string();
-        
+
         info!("{}", command);
 
         let response = process_command(command, &db, false).await;

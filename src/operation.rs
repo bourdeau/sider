@@ -1,7 +1,9 @@
 use crate::database::Db;
 use crate::types::Command;
 use crate::types::CommandArgs;
+use crate::types::DbValue;
 use crate::types::Key;
+use crate::types::KeyList;
 use regex::Regex;
 
 async fn delete_expired_key(db: &Db, key: Key) -> bool {
@@ -33,7 +35,8 @@ pub async fn get_key(db: &Db, command: Command) -> String {
     let nil = "(nil)\n".to_string();
 
     let key = match key {
-        Some(k) => k,
+        Some(DbValue::StringKey(k)) => k,
+        Some(DbValue::ListKey(_)) => return "ERR key is a list, not a string\n".to_string(),
         None => return nil,
     };
 
@@ -54,7 +57,9 @@ pub async fn set_key(db: &Db, command: Command) -> String {
         _ => return "ERR invalid command\n".to_string(),
     };
 
-    db.write().await.insert(key.name.clone(), key);
+    db.write()
+        .await
+        .insert(key.name.clone(), DbValue::StringKey(key));
 
     "OK\n".to_string()
 }
@@ -168,7 +173,8 @@ pub async fn expire(db: &Db, command: Command) -> String {
     let mut db_write = db.write().await;
 
     match db_write.get_mut(&key.name) {
-        Some(key) => {
+        Some(DbValue::ListKey(_)) => "ERR key is a list, not a string\n".to_string(),
+        Some(DbValue::StringKey(key)) => {
             key.set_ttl(ttl);
             "(integer) 1\n".to_string()
         }
@@ -185,14 +191,15 @@ pub async fn ttl(db: &Db, command: Command) -> String {
     let db_read = db.read().await;
 
     let key = match db_read.get(&key.name) {
-        Some(key) => key,
+        Some(DbValue::StringKey(key)) => key,
+        Some(DbValue::ListKey(_)) => return "ERR key is a list, not a string\n".to_string(),
         None => return "(integer) -2\n".to_string(),
     };
 
     format!("(integer) {}\n", key.get_ttl())
 }
 
-async fn incr_decr(db: &Db, command: Command, inc: bool) -> String {
+pub async fn incr_decr(db: &Db, command: Command, inc: bool) -> String {
     let key = match command.args {
         CommandArgs::SingleKey(key) => key,
         _ => return "ERR invalid command\n".to_string(),
@@ -203,11 +210,18 @@ async fn incr_decr(db: &Db, command: Command, inc: bool) -> String {
     let mut db_write = db.write().await;
 
     let key = match db_write.get_mut(&key_name) {
-        Some(key) => key,
+        Some(DbValue::StringKey(key)) => key,
+        Some(DbValue::ListKey(_)) => return "ERR key is a list, not a string\n".to_string(),
         None => {
             let key = Key::new(key_name.clone(), "0".to_string(), None);
-            db_write.insert(key_name.clone(), key);
-            db_write.get_mut(&key_name).expect("Key not found")
+            db_write.insert(key_name.clone(), DbValue::StringKey(key));
+            match db_write.get_mut(&key_name) {
+                Some(DbValue::StringKey(key)) => key,
+                Some(DbValue::ListKey(_)) => {
+                    return "ERR key is a list, not a string\n".to_string()
+                }
+                _ => return "ERR unexpected database error\n".to_string(),
+            }
         }
     };
 
@@ -247,44 +261,84 @@ pub async fn decr(db: &Db, command: Command) -> String {
 // if the key holds a non-numeric value or a string that cannot
 // be parsed as a 64-bit signed integer.
 pub async fn incrby(db: &Db, command: Command) -> String {
-    let key = match command.args {
-        CommandArgs::SingleKey(key) => key,
+    let key_name = match &command.args {
+        CommandArgs::SingleKey(key) => key.name.clone(),
         _ => return "ERR invalid command\n".to_string(),
     };
-    let key_name = key.name.clone();
 
-    let by = match key.value.as_deref() {
-        Some(by) => by,
-        None => return "ERR value is not an integer\n".to_string(),
+    let by_str = match &command.args {
+        CommandArgs::SingleKey(key) => match key.value.as_deref() {
+            Some(by) => by,
+            None => return "ERR value is not an integer\n".to_string(),
+        },
+        _ => return "ERR invalid command\n".to_string(),
     };
 
-    let by = match by.parse::<i64>() {
-        Ok(by) => by,
+    let by = match by_str.parse::<i64>() {
+        Ok(num) => num,
         Err(_) => return "ERR value is not an integer\n".to_string(),
     };
 
     let mut db_write = db.write().await;
 
     let key = match db_write.get_mut(&key_name) {
-        Some(key) => key,
+        Some(DbValue::StringKey(existing_key)) => existing_key,
+        Some(_) => return "ERR key is not a string\n".to_string(),
         None => {
-            let key = Key::new(key_name.clone(), "0".to_string(), None);
-            db_write.insert(key_name.clone(), key);
-            db_write.get_mut(&key_name).expect("Key not found")
+            db_write.insert(
+                key_name.clone(),
+                DbValue::StringKey(Key {
+                    name: key_name.clone(),
+                    value: Some("0".to_string()),
+                    ..Default::default()
+                }),
+            );
+            match db_write.get_mut(&key_name) {
+                Some(DbValue::StringKey(new_key)) => new_key,
+                _ => return "ERR unexpected database error\n".to_string(),
+            }
         }
     };
 
-    let Ok(num) = key.value.as_deref().unwrap_or("0").parse::<i64>() else {
-        return "ERR value is not an integer\n".to_string();
+    let num_str = key.value.as_deref().unwrap_or("0");
+
+    let num = match num_str.parse::<i64>() {
+        Ok(n) => n,
+        Err(_) => return "ERR value is not an integer\n".to_string(),
     };
 
     let new_value = num + by;
-
     key.value = Some(new_value.to_string());
 
     format!("(integer) {}\n", new_value)
 }
 
 pub async fn lpush(db: &Db, command: Command) -> String {
-    "Ok".to_string()
+    let key_list = match command.args {
+        CommandArgs::KeyWithValues(key) => key,
+        _ => return "ERR invalid command\n".to_string(),
+    };
+
+    let key_name = key_list.name.clone();
+    let new_values = key_list.values.clone();
+
+    let mut db_write = db.write().await;
+
+    match db_write.get_mut(&key_name) {
+        Some(DbValue::ListKey(existing_list)) => {
+            existing_list.values.splice(0..0, new_values);
+            format!("(integer) {}\n", existing_list.values.len())
+        }
+        Some(_) => "ERR key exists as non-list type\n".to_string(),
+        None => {
+            db_write.insert(
+                key_name.clone(),
+                DbValue::ListKey(KeyList {
+                    name: key_name,
+                    values: new_values.clone(),
+                }),
+            );
+            format!("(integer) {}\n", new_values.len())
+        }
+    }
 }

@@ -3,8 +3,8 @@ use crate::parser::parse_command;
 use crate::types::CommandType;
 
 use crate::operation::{
-    decr, delete_key, exists, expire, flush_db, get_key, get_keys, incr, incrby, pong, set_key,
-    ttl, lpush
+    decr, delete_key, exists, expire, flush_db, get_key, get_keys, incr, incrby, lpush, pong,
+    set_key, ttl,
 };
 
 pub async fn process_command(command: String, db: &Db, restore: bool) -> String {
