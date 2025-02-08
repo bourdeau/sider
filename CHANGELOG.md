@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/bourdeau/sider/compare/v0.3.0...v0.3.1) (2025-02-08)
+
+
+### Bug Fixes
+
+* DEL return & refactoring (closes [#14](https://github.com/bourdeau/sider/issues/14)) ([#29](https://github.com/bourdeau/sider/issues/29)) ([7278e20](https://github.com/bourdeau/sider/commit/7278e2049ed347fb77dcb8768156a83313a94fa3))
+
 ## [0.3.0](https://github.com/bourdeau/sider/compare/v0.2.0...v0.3.0) (2025-02-07)
 
 
