@@ -5,10 +5,10 @@ use utils::{send_command, start_server, stop_server};
 fn test_basic_set_get() {
     let mut server = start_server();
 
-    let response = send_command("SET name Alice\n");
+    let response = send_command("SET name Alice");
     assert!(response.contains("OK"));
 
-    let response = send_command("GET name\n");
+    let response = send_command("GET name");
     assert!(response.contains("Alice"));
 
     stop_server(&mut server);
@@ -20,10 +20,10 @@ fn test_delete_key() {
 
     send_command("SET city Paris");
     let response = send_command("DEL city");
-    assert!(response.contains("OK"));
+    assert!(response.contains("(integer) 1"));
 
     let response = send_command("GET city");
-    assert!(response.contains("nil"));
+    assert!(response.contains("(nil)"));
 
     stop_server(&mut server);
 }
@@ -38,7 +38,7 @@ fn test_delete_multiple_keys() {
 
     let response = send_command("DEL first_name last_name age");
 
-    assert!(response.contains("OK"));
+    assert!(response.contains("(integer) 3"));
 
     stop_server(&mut server);
 }
@@ -49,7 +49,7 @@ fn test_key_regex() {
 
     send_command("SET first_name Alice");
     send_command("SET last_name Smith");
-    send_command("SET age 32\n");
+    send_command("SET age 32");
 
     let response = send_command("KEYS *");
     assert!(response.contains("first_name"));

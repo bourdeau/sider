@@ -1,32 +1,5 @@
+use crate::types::Key;
 use std::time::{SystemTime, UNIX_EPOCH};
-
-#[derive(Debug, PartialEq)]
-pub enum CommandType {
-    PONG,
-    GET,
-    SET,
-    DELETE,
-    FLUSHDB,
-    KEYS,
-    EXISTS,
-    EXPIRE,
-    TTL,
-    INCR,
-    DECR,
-    INCRBY,
-}
-#[derive(Debug)]
-pub struct Command {
-    pub command_type: CommandType,
-    pub keys: Vec<Key>,
-}
-
-#[derive(Debug, Clone, Default)]
-pub struct Key {
-    pub name: String,
-    pub value: Option<String>,
-    pub expires_at: Option<i64>,
-}
 
 impl Key {
     pub fn new(name: String, value: String, expires_at: Option<i64>) -> Self {

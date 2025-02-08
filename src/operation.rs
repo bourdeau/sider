@@ -1,6 +1,7 @@
-use crate::command::Command;
-use crate::command::Key;
 use crate::database::Db;
+use crate::types::Command;
+use crate::types::CommandArgs;
+use crate::types::Key;
 use regex::Regex;
 
 async fn delete_expired_key(db: &Db, key: Key) -> bool {
@@ -19,14 +20,21 @@ pub async fn pong() -> String {
 }
 
 pub async fn get_key(db: &Db, command: Command) -> String {
+    let key_name = match &command.args {
+        CommandArgs::SingleKey(key) => &key.name,
+        _ => return "ERR invalid command\n".to_string(),
+    };
+
     let key = {
         let db_read = db.read().await;
-        db_read.get(&command.keys[0].name).cloned() // Clone key to release lock
+        db_read.get(key_name).cloned() // Clone key to release lock
     };
+
+    let nil = "(nil)\n".to_string();
 
     let key = match key {
         Some(k) => k,
-        None => return "nil\n".to_string(),
+        None => return nil,
     };
 
     if let Some(value) = &key.value {
@@ -37,23 +45,37 @@ pub async fn get_key(db: &Db, command: Command) -> String {
         }
     }
 
-    "nil\n".to_string()
+    nil
 }
 
 pub async fn set_key(db: &Db, command: Command) -> String {
-    let key: Key = command.keys[0].clone();
+    let key = match command.args {
+        CommandArgs::SingleKey(key) => key,
+        _ => return "ERR invalid command\n".to_string(),
+    };
+
     db.write().await.insert(key.name.clone(), key);
 
     "OK\n".to_string()
 }
 
 pub async fn delete_key(db: &Db, command: Command) -> String {
-    let key: Key = command.keys[0].clone();
+    let keys = match &command.args {
+        CommandArgs::SingleKey(key) => vec![key.name.clone()],
+        CommandArgs::MultipleKeys(keys) => keys.iter().map(|k| k.name.clone()).collect(),
+        _ => return "ERR invalid command\n".to_string(),
+    };
+
     let mut db_write = db.write().await;
-    match db_write.remove(&key.name) {
-        Some(_) => "OK\n".to_string(),
-        _ => "nil\n".to_string(),
+    let mut deleted_count = 0;
+
+    for key in keys {
+        if db_write.remove(&key).is_some() {
+            deleted_count += 1;
+        }
     }
+
+    format!("(integer) {}\n", deleted_count)
 }
 
 pub async fn flush_db(db: &Db) -> String {
@@ -85,7 +107,10 @@ fn convert_redis_pattern_to_regex(pattern: &str) -> String {
 
 /// Returns keys matching the Redis-style pattern
 pub async fn get_keys(db: &Db, command: Command) -> String {
-    let pattern = command.keys[0].name.as_str();
+    let pattern = match &command.args {
+        CommandArgs::SingleKey(key) => &key.name,
+        _ => return "ERR invalid command\n".to_string(),
+    };
 
     // Convert Redis glob pattern to regex
     let regex_pattern = convert_redis_pattern_to_regex(pattern);
@@ -117,20 +142,22 @@ pub async fn get_keys(db: &Db, command: Command) -> String {
 }
 
 pub async fn exists(db: &Db, command: Command) -> String {
+    let keys = match &command.args {
+        CommandArgs::SingleKey(key) => vec![key.name.clone()],
+        CommandArgs::MultipleKeys(keys) => keys.iter().map(|k| k.name.clone()).collect(),
+        _ => return "ERR invalid command\n".to_string(),
+    };
+
     let db_read = db.read().await;
-    let nb_keys = command
-        .keys
-        .iter()
-        .filter(|key| db_read.contains_key(&key.name))
-        .count();
+    let nb_keys = keys.iter().filter(|key| db_read.contains_key(*key)).count();
 
     format!("{}\n", nb_keys)
 }
 
 pub async fn expire(db: &Db, command: Command) -> String {
-    let key = match command.keys.first() {
-        Some(key) => key,
-        None => return "Error: No key provided\n".to_string(),
+    let key = match command.args {
+        CommandArgs::SingleKey(key) => key,
+        _ => return "ERR invalid command\n".to_string(),
     };
 
     let ttl = match key.expires_at {
@@ -150,8 +177,14 @@ pub async fn expire(db: &Db, command: Command) -> String {
 }
 
 pub async fn ttl(db: &Db, command: Command) -> String {
+    let key = match command.args {
+        CommandArgs::SingleKey(key) => key,
+        _ => return "ERR invalid command\n".to_string(),
+    };
+
     let db_read = db.read().await;
-    let key = match db_read.get(&command.keys[0].name) {
+
+    let key = match db_read.get(&key.name) {
         Some(key) => key,
         None => return "(integer) -2\n".to_string(),
     };
@@ -160,7 +193,12 @@ pub async fn ttl(db: &Db, command: Command) -> String {
 }
 
 async fn incr_decr(db: &Db, command: Command, inc: bool) -> String {
-    let key_name = command.keys[0].name.clone();
+    let key = match command.args {
+        CommandArgs::SingleKey(key) => key,
+        _ => return "ERR invalid command\n".to_string(),
+    };
+
+    let key_name = key.name.clone();
 
     let mut db_write = db.write().await;
 
@@ -209,7 +247,10 @@ pub async fn decr(db: &Db, command: Command) -> String {
 // if the key holds a non-numeric value or a string that cannot
 // be parsed as a 64-bit signed integer.
 pub async fn incrby(db: &Db, command: Command) -> String {
-    let key = command.keys[0].clone();
+    let key = match command.args {
+        CommandArgs::SingleKey(key) => key,
+        _ => return "ERR invalid command\n".to_string(),
+    };
     let key_name = key.name.clone();
 
     let by = match key.value.as_deref() {

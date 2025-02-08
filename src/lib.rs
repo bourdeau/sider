@@ -6,9 +6,11 @@
 #![allow(non_snake_case)]
 
 pub mod aof;
-pub mod command;
+pub mod commands;
 pub mod database;
+pub mod keys;
 pub mod operation;
 pub mod parser;
 pub mod process;
 pub mod server;
+pub mod types;

@@ -10,7 +10,8 @@ fmt:
 client:
   nc 127.0.0.1 6379
 
-test:  
+test:
+  rm -rf ~/.local/share/sider/appendonly.aof
   RUST_BACKTRACE=1 cargo test -- --nocapture --test-threads=1
 
 doc:

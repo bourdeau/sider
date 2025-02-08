@@ -1,6 +1,6 @@
-use crate::command::CommandType;
 use crate::database::Db;
 use crate::parser::parse_command;
+use crate::types::CommandType;
 
 use crate::operation::{
     decr, delete_key, exists, expire, flush_db, get_key, get_keys, incr, incrby, pong, set_key,

@@ -1,83 +1,38 @@
 use crate::aof::write_aof;
-use crate::command::{Command, CommandType, Key};
+use crate::commands::{
+    build_decr_command, build_delete_command, build_exists_command, build_expire_command,
+    build_flush_db_command, build_get_command, build_incr_command, build_incrby_command,
+    build_keys_command, build_pong_command, build_set_command, build_ttl_command,
+};
+use crate::types::Command;
 
 pub async fn parse_command(command: &str, restore: bool) -> Result<Command, String> {
     let parts: Vec<&str> = command.split_whitespace().collect();
 
-    let command_type = match parts[0].to_uppercase().as_str() {
-        "PING" => CommandType::PONG,
-        "GET" => CommandType::GET,
-        "SET" => CommandType::SET,
-        "DEL" => CommandType::DELETE,
-        "FLUSHDB" => CommandType::FLUSHDB,
-        "KEYS" => CommandType::KEYS,
-        "EXISTS" => CommandType::EXISTS,
-        "EXPIRE" => CommandType::EXPIRE,
-        "TTL" => CommandType::TTL,
-        "INCR" => CommandType::INCR,
-        "DECR" => CommandType::DECR,
-        "INCRBY" => CommandType::INCRBY,
-        _ => return Err(format!("Unknown command: {}", parts[0])),
-    };
+    if parts.is_empty() {
+        return Err("ERR empty command".to_string());
+    }
 
-    let keys = parts
+    let args = parts
         .iter()
         .skip(1)
-        .map(|&s| s.to_string())
+        .map(|s| s.to_string())
         .collect::<Vec<String>>();
 
-    let error = Err("ERR wrong number of arguments for command".to_string());
-
-    if command_type == CommandType::SET && keys.len() < 2 {
-        return error;
-    }
-    if command_type == CommandType::DELETE && keys.is_empty() {
-        return error;
-    }
-    if command_type == CommandType::EXPIRE && keys.len() < 2 {
-        return error;
-    }
-    if command_type == CommandType::TTL && keys.is_empty() {
-        return error;
-    }
-
-    let key_objects = match command_type {
-        CommandType::PONG | CommandType::FLUSHDB => vec![],
-        CommandType::SET | CommandType::INCRBY => {
-            vec![Key::new(keys[0].clone(), keys[1].clone(), None)]
-        }
-        CommandType::GET
-        | CommandType::KEYS
-        | CommandType::TTL
-        | CommandType::INCR
-        | CommandType::DECR => {
-            vec![Key {
-                name: keys[0].clone(),
-                ..Default::default()
-            }]
-        }
-        CommandType::DELETE | CommandType::EXISTS => keys
-            .iter()
-            .map(|key| Key {
-                name: key.clone(),
-                ..Default::default()
-            })
-            .collect(),
-        CommandType::EXPIRE => {
-            let ttl = keys[1]
-                .parse::<i64>()
-                .map_err(|_| "ERR value is not an integer".to_string())?;
-            vec![Key {
-                name: keys[0].clone(),
-                expires_at: Some(ttl),
-                ..Default::default()
-            }]
-        }
-    };
-
-    let command = Command {
-        command_type,
-        keys: key_objects,
+    let command = match parts[0].to_uppercase().as_str() {
+        "PING" => build_pong_command(),
+        "FLUSHDB" => build_flush_db_command(),
+        "GET" => build_get_command(&args)?,
+        "SET" => build_set_command(&args)?,
+        "DEL" => build_delete_command(&args)?,
+        "KEYS" => build_keys_command(&args)?,
+        "EXISTS" => build_exists_command(&args)?,
+        "EXPIRE" => build_expire_command(&args)?,
+        "TTL" => build_ttl_command(&args)?,
+        "INCR" => build_incr_command(&args)?,
+        "DECR" => build_decr_command(&args)?,
+        "INCRBY" => build_incrby_command(&args)?,
+        _ => return Err(format!("Unknown command: {}", parts[0])),
     };
 
     if !restore {
