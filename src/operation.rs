@@ -6,6 +6,9 @@ use crate::types::Key;
 use crate::types::KeyList;
 use regex::Regex;
 
+const ERROR_LIST_KEY: &str =
+    "(error) WRONGTYPE Operation against a key holding the wrong kind of value\n";
+
 async fn delete_expired_key(db: &Db, key: Key) -> bool {
     let mut db_write = db.write().await;
 
@@ -36,7 +39,7 @@ pub async fn get_key(db: &Db, command: Command) -> String {
 
     let key = match key {
         Some(DbValue::StringKey(k)) => k,
-        Some(DbValue::ListKey(_)) => return "ERR key is a list, not a string\n".to_string(),
+        Some(DbValue::ListKey(_)) => return ERROR_LIST_KEY.to_string(),
         None => return nil,
     };
 

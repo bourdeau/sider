@@ -203,3 +203,26 @@ fn test_incrby() {
 
     stop_server(&mut server);
 }
+
+#[test]
+fn test_lpush() {
+    let mut server = start_server();
+
+    let response = send_command("LPUSH names Alice Bob Charlie");
+    assert!(response.contains("(integer) 3"));
+
+    let response = send_command("LPUSH names David");
+    assert!(response.contains("(integer) 4"));
+
+    let response = send_command("LPUSH names Eve");
+    assert!(response.contains("(integer) 5"));
+
+    let response = send_command("LPUSH names Eve");
+    assert!(response.contains("(integer) 6"));
+
+    let response = send_command("GET names");
+    assert!(response
+        .contains("(error) WRONGTYPE Operation against a key holding the wrong kind of value"));
+
+    stop_server(&mut server);
+}
