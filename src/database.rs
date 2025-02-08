@@ -1,13 +1,15 @@
 use crate::aof::get_aof_log_dir;
 use crate::process::process_command;
-use crate::types::Key;
+use crate::types::DbValue;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use tokio::time::{self, Duration};
+use tracing::info;
 
-pub type Db = Arc<RwLock<HashMap<String, Key>>>;
+pub type Db = Arc<RwLock<HashMap<String, DbValue>>>;
 
+// Remove Key with expired ttl. ListKey don't have ttl for now
 pub async fn delete_expired_keys(db: Db) {
     let mut interval = time::interval(Duration::from_secs(60));
 
@@ -15,12 +17,15 @@ pub async fn delete_expired_keys(db: Db) {
         interval.tick().await;
 
         let mut db_write = db.write().await;
-        db_write.retain(|_, value| !value.is_expired());
+        db_write.retain(|_, value| match value {
+            DbValue::StringKey(key) => !key.is_expired(),
+            DbValue::ListKey(_) => true,
+        });
     }
 }
 
 pub async fn restore_from_aof(db: Db) {
-    println!("Restoring from AOF file");
+    info!("Restoring from AOF file");
     let log_path = get_aof_log_dir();
     let file_path = log_path.join("appendonly.aof");
 
@@ -38,7 +43,7 @@ pub async fn restore_from_aof(db: Db) {
         if command.is_empty() {
             continue;
         }
-        println!("Restoring command: {}", command);
         process_command(command.to_string(), &db, false).await;
+        info!("Restored: {}", command);
     }
 }

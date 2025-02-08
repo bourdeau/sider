@@ -4,16 +4,16 @@ use tokio::sync::RwLock;
 
 pub type Db = Arc<RwLock<HashMap<String, DbValue>>>;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum DbValue {
     StringKey(Key),
-    ListKey(ListKey),
+    ListKey(KeyList),
 }
 
 #[derive(Debug)]
 pub enum CommandArgs {
     SingleKey(Key),
-    KeyWithValues(ListKey),
+    KeyWithValues(KeyList),
     MultipleKeys(Vec<Key>),
 }
 
@@ -34,14 +34,6 @@ pub struct Key {
 pub struct KeyList {
     pub name: String,
     pub values: Vec<String>,
-    pub expires_at: Option<i64>,
-}
-
-#[derive(Debug, Clone, Default)]
-pub struct ListKey {
-    pub name: String,
-    pub values: Vec<String>,
-    pub expires_at: Option<i64>,
 }
 
 #[derive(Debug, PartialEq, Eq, Hash)]
@@ -58,4 +50,5 @@ pub enum CommandType {
     INCR,
     DECR,
     INCRBY,
+    LPUSH,
 }

@@ -1,4 +1,4 @@
-use crate::types::{Command, CommandArgs, CommandType, Key};
+use crate::types::{Command, CommandArgs, CommandType, Key, KeyList};
 
 pub fn build_pong_command() -> Command {
     Command {
@@ -154,5 +154,15 @@ pub fn build_incrby_command(args: &[String]) -> Result<Command, String> {
             increment.to_string(),
             None,
         )),
+    })
+}
+
+pub fn build_lpush_command(args: &[String]) -> Result<Command, String> {
+    Ok(Command {
+        command_type: CommandType::LPUSH,
+        args: CommandArgs::KeyWithValues(KeyList {
+            name: args[0].to_string(),
+            values: args.iter().skip(1).cloned().collect::<Vec<String>>(),
+        }),
     })
 }
