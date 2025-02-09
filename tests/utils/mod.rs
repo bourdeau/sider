@@ -1,26 +1,10 @@
-use dirs::home_dir;
 use std::io::{Read, Write};
 use std::net::TcpStream;
-use std::path::PathBuf;
 use std::process::{Child, Command};
 use std::thread::sleep;
 use std::time::Duration;
 
-pub fn get_aof_log_dir() -> PathBuf {
-    let home = home_dir().expect("Failed to get home directory");
-    home.join(".local/share/sider")
-}
-
 pub fn start_server() -> Child {
-    let aof_log_dir = get_aof_log_dir();
-    if aof_log_dir.exists() {
-        let file_path = aof_log_dir.join("appendonly.aof");
-        let _ = std::fs::remove_file(&file_path);
-    }
-
-    // remove aof file
-    let _ = std::fs::remove_file("dump.rdb");
-
     let child = Command::new("cargo")
         .args(["run"])
         .stdout(std::process::Stdio::null())

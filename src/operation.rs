@@ -1,10 +1,10 @@
+use crate::aof::delete_aof_file;
 use crate::database::Db;
 use crate::types::Command;
 use crate::types::CommandArgs;
 use crate::types::DbValue;
 use crate::types::Key;
 use crate::types::KeyList;
-use crate::aof::delete_aof_file;
 use regex::Regex;
 
 const ERROR_LIST_KEY: &str =
