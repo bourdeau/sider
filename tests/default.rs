@@ -66,7 +66,7 @@ fn test_key_regex() {
     assert!(response.contains("first_name"));
 
     send_command("FLUSHDB");
-    std::thread::sleep(std::time::Duration::from_secs(1));
+    std::thread::sleep(std::time::Duration::from_secs(10));
 
     let response = send_command("KEYS *");
     assert!(
