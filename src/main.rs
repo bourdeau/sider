@@ -1,3 +1,4 @@
+use sider::aof::clean_up_db;
 use sider::config::get_config;
 use sider::database::delete_expired_keys;
 use sider::database::{restore_from_aof, Db};
@@ -27,12 +28,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     info!(message);
 
-    // Background task to delete expired keys
-    // cloning Arc is cheap apparently
+    // Restoring DB from AOF file at start up
+    tokio::spawn(restore_from_aof(db.clone()));
+
+    // Delete expired keys every 60 seconds
     tokio::spawn(delete_expired_keys(db.clone()));
 
-    // Restoring DB from AOF file
-    tokio::spawn(restore_from_aof(db.clone()));
+    // Clean database every 60 seconds
+    tokio::spawn(clean_up_db(db.clone()));
 
     loop {
         let (socket, addr) = listener.accept().await?;
