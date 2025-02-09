@@ -15,7 +15,7 @@ pub fn start_server() -> Child {
     let aof_log_dir = get_aof_log_dir();
     if aof_log_dir.exists() {
         let file_path = aof_log_dir.join("appendonly.aof");
-        let _ = std::fs::remove_dir_all(&file_path);
+        let _ = std::fs::remove_file(&file_path);
     }
 
     // remove aof file
@@ -31,7 +31,7 @@ pub fn start_server() -> Child {
     // Actively check if the server is ready before continuing
     for _ in 0..20 {
         if TcpStream::connect("127.0.0.1:6379").is_ok() {
-            send_command("FLUSDB");
+            send_command("FLUSHDB");
             return child;
         }
         sleep(Duration::from_millis(200)); // Wait before retrying
