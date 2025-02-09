@@ -15,6 +15,7 @@ pub async fn delete_expired_keys(db: Db) {
 
     loop {
         interval.tick().await;
+        info!("Deleting expired keys");
 
         let mut db_write = db.write().await;
         db_write.retain(|_, value| match value {
