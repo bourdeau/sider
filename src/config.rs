@@ -26,10 +26,6 @@ fn create_default_config(config_path: &PathBuf) {
         [main]
         port = 6379
         bind = "127.0.0.1"
-        log_level = "info"
-
-        [database]
-        max_memory = "512mb"
     "#;
 
     let parent = config_path
