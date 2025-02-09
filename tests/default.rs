@@ -66,9 +66,14 @@ fn test_key_regex() {
     assert!(response.contains("first_name"));
 
     send_command("FLUSHDB");
+    std::thread::sleep(std::time::Duration::from_secs(10));
 
     let response = send_command("KEYS *");
-    assert!(response.contains("(empty array)"));
+    assert!(
+        response.contains("(empty array)"),
+        "Test failed! Actual response: {:?}",
+        response
+    );
 
     stop_server(&mut server);
 }

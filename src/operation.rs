@@ -1,3 +1,4 @@
+use crate::aof::delete_aof_file;
 use crate::database::Db;
 use crate::types::Command;
 use crate::types::CommandArgs;
@@ -88,6 +89,8 @@ pub async fn delete_key(db: &Db, command: Command) -> String {
 
 pub async fn flush_db(db: &Db) -> String {
     db.write().await.clear();
+    // delete aof file
+    delete_aof_file();
     "OK\n".to_string()
 }
 

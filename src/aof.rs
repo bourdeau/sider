@@ -11,6 +11,14 @@ pub fn get_aof_log_dir() -> PathBuf {
     home.join(".local/share/sider")
 }
 
+pub fn delete_aof_file() {
+    let aof_log_dir = get_aof_log_dir();
+    if aof_log_dir.exists() {
+        let file_path = aof_log_dir.join("appendonly.aof");
+        let _ = std::fs::remove_file(&file_path);
+    }
+}
+
 pub async fn write_aof(command: &Command) -> std::io::Result<()> {
     let log_path = get_aof_log_dir();
 

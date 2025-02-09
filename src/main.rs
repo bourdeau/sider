@@ -1,21 +1,31 @@
+use sider::config::get_config;
+use sider::database::delete_expired_keys;
 use sider::database::{restore_from_aof, Db};
 use sider::server::handle_client;
 use std::collections::HashMap;
 use std::error::Error;
+use std::net::Ipv4Addr;
 use std::sync::Arc;
 use tokio::net::TcpListener;
 use tokio::sync::RwLock;
-
-use sider::database::delete_expired_keys;
 use tracing::{error, info};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     tracing_subscriber::fmt::init();
+
     let db: Db = Arc::new(RwLock::new(HashMap::new()));
 
-    let listener = TcpListener::bind("127.0.0.1:6379").await?;
-    info!("Listening on 127.0.0.1:6379...");
+    // Config
+    let config = get_config();
+    let port: u16 = config.get("port").expect("Port is missing");
+    let bind: Ipv4Addr = config.get("bind").expect("Bind is missing");
+    let full_address = format!("{}:{}", bind, port);
+
+    let listener = TcpListener::bind(full_address.to_string()).await?;
+    let message = format!("Listening {}...", full_address);
+
+    info!(message);
 
     // Background task to delete expired keys
     // cloning Arc is cheap apparently
