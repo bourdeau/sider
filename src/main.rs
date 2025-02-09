@@ -1,15 +1,14 @@
+use sider::config::get_config;
+use sider::database::delete_expired_keys;
 use sider::database::{restore_from_aof, Db};
 use sider::server::handle_client;
 use std::collections::HashMap;
 use std::error::Error;
+use std::net::Ipv4Addr;
 use std::sync::Arc;
 use tokio::net::TcpListener;
 use tokio::sync::RwLock;
-use sider::database::delete_expired_keys;
 use tracing::{error, info};
-use sider::config::get_config;
-use std::net::Ipv4Addr;
-
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {

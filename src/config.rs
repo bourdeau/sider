@@ -1,6 +1,7 @@
 use clap::Parser;
 use config::{Config, File};
 use dirs::config_dir;
+use once_cell::sync::Lazy;
 use std::fs;
 use std::net::{IpAddr, Ipv4Addr};
 use std::path::PathBuf;
@@ -22,6 +23,7 @@ fn get_config_path() -> PathBuf {
 
 fn create_default_config(config_path: &PathBuf) {
     let default_config = r#"
+        [main]
         port = 6379
         bind = "127.0.0.1"
         log_level = "info"
@@ -38,7 +40,7 @@ fn create_default_config(config_path: &PathBuf) {
     fs::write(config_path, default_config).expect("Failed to write default config file");
 }
 
-pub fn get_config() -> Config {
+static CONFIG: Lazy<Config> = Lazy::new(|| {
     let config_path = get_config_path();
 
     let cli = Cli::parse();
@@ -52,11 +54,15 @@ pub fn get_config() -> Config {
     }
 
     Config::builder()
-        .add_source(File::with_name(config_path.to_str().unwrap()))
+        .add_source(File::with_name(config_path.to_str().expect("No file")))
         .set_override("port", cli.port)
         .expect("Failed to set port override")
         .set_override("bind", cli.bind.to_string())
         .expect("Failed to set bind override")
         .build()
         .expect("Failed to load config")
+});
+
+pub fn get_config() -> &'static Config {
+    &CONFIG
 }
