@@ -68,7 +68,11 @@ fn test_key_regex() {
     send_command("FLUSHDB");
 
     let response = send_command("KEYS *");
-    assert!(response.contains("(empty array)"));
+    assert!(
+        response.contains("(empty array)"),
+        "Test failed! Actual response: {:?}",
+        response
+    );
 
     stop_server(&mut server);
 }
