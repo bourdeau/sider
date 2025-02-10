@@ -157,12 +157,30 @@ pub fn build_incrby_command(args: &[String]) -> Result<Command, String> {
     })
 }
 
-pub fn build_lpush_command(args: &[String]) -> Result<Command, String> {
+fn build_push_command(args: &[String], cmd_type: CommandType) -> Result<Command, String> {
     Ok(Command {
-        command_type: CommandType::LPUSH,
+        command_type: cmd_type,
         args: CommandArgs::KeyWithValues(KeyList {
             name: args[0].to_string(),
             values: args.iter().skip(1).cloned().collect::<Vec<String>>(),
+        }),
+    })
+}
+
+pub fn build_lpush_command(args: &[String]) -> Result<Command, String> {
+    build_push_command(args, CommandType::LPUSH)
+}
+
+pub fn build_lrange_command(args: &[String]) -> Result<Command, String> {
+    if args.len() < 3 {
+        return Err("ERR wrong number of arguments".to_string());
+    }
+
+    Ok(Command {
+        command_type: CommandType::LRANGE,
+        args: CommandArgs::KeyWithValues(KeyList {
+            name: args[0].to_string(),
+            values: vec![args[1].to_string(), args[2].to_string()],
         }),
     })
 }

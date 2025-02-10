@@ -51,4 +51,5 @@ pub enum CommandType {
     DECR,
     INCRBY,
     LPUSH,
+    LRANGE,
 }
