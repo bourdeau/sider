@@ -413,16 +413,7 @@ pub async fn lrange(db: &Db, command: Command) -> String {
     if results.is_empty() {
         return "(empty array)\n".to_string();
     }
-    // TEST PASSES
-    // results
-    //     .iter()
-    //     .enumerate()
-    //     .map(|(i, key)| format!("{}) \"{}\"", i + 1, key))
-    //     .collect::<Vec<String>>()
-    //     .join("\n")
-    //     + "\n"
 
-    // TEST fail
     format_list_response(results.to_vec())
 }
 
