@@ -292,21 +292,21 @@ fn test_lrange() {
 fn test_lpop() {
     let mut server = start_server();
 
-    let response = send_command("LPUSH mylist A B C D E");
+    let response = send_command("LPUSH lpoplist A B C D E");
     assert!(response.contains("(integer) 5"));
 
-    let response = send_command("LPOP mylist");
-    assert!(response.contains("1 \"E\""));
+    let response = send_command("LPOP lpoplist");
+    assert!(response.contains("1) \"E\""));
 
-    let response = send_command("LPOP mylist 2");
-    assert!(response.contains("1 \"D\""));
-    assert!(response.contains("2 \"C\""));
+    let response = send_command("LPOP lpoplist 2");
+    assert!(response.contains("1) \"D\""));
+    assert!(response.contains("2) \"C\""));
 
-    let response = send_command("LPOP mylist 10");
-    assert!(response.contains("1 \"B\""));
-    assert!(response.contains("2 \"A\""));
+    let response = send_command("LPOP lpoplist 10");
+    assert!(response.contains("1) \"B\""));
+    assert!(response.contains("2) \"A\""));
 
-    let response = send_command("LPOP mylist");
+    let response = send_command("LPOP lpoplist");
     assert!(response.contains("(nil)"));
 
     stop_server(&mut server);
