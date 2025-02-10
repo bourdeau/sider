@@ -62,7 +62,7 @@ SET first_name John
 | **LRANGE** | `LRANGE key start stop` | `LRANGE queue 0 -1` | `2` (new length) | ✅ |
 | **RPUSH** | `RPUSH key value` | `RPUSH queue "task2"` | `2` (new length) | ✅ |
 | **LPOP**  | `LPOP key` | `LPOP queue` | `"task1"` | ✅ |
-| **RPOP**  | `RPOP key` | `RPOP queue` | `"task2"` |   |
+| **RPOP**  | `RPOP key` | `RPOP queue` | `"task2"` | ✅ |
 
 
 #### Hashes

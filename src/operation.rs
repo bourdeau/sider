@@ -395,13 +395,17 @@ async fn pop_list(db: &Db, command: Command, pop_type: PopType) -> String {
         PopType::RPOP => (len.saturating_sub(nb), len),
     };
 
-    let removed: Vec<String> = key_db
+    let mut removed: Vec<String> = key_db
         .values
         .drain(start..end.min(key_db.values.len()))
         .collect();
 
     if removed.is_empty() {
         return "(nil)\n".to_string();
+    }
+
+    if let PopType::RPOP = pop_type {
+        removed.reverse();
     }
 
     format_list_response(removed)

@@ -311,3 +311,23 @@ fn test_lpop() {
 
     stop_server(&mut server);
 }
+
+#[test]
+fn test_rpop() {
+    let mut server = start_server();
+
+    let response = send_command("RPUSH rpoplist A B C");
+    assert!(response.contains("(integer) 3"));
+
+    let response = send_command("RPOP rpoplist");
+    assert!(response.contains("1) \"C\""));
+
+    let response = send_command("RPOP rpoplist 2");
+    assert!(response.contains("1) \"B\""));
+    assert!(response.contains("2) \"A\""));
+
+    let response = send_command("RPOP rpoplist");
+    assert!(response.contains("(nil)"));
+
+    stop_server(&mut server);
+}
