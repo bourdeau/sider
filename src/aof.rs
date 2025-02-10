@@ -1,8 +1,8 @@
 use crate::types::{Command, CommandArgs, Db, DbValue};
 use dirs::home_dir;
-use std::fs;
 use std::io::Error;
 use std::path::PathBuf;
+use tokio::fs;
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
 use tokio::time::{self, Duration};
@@ -13,11 +13,11 @@ pub fn get_aof_log_dir() -> PathBuf {
     home.join(".local/share/sider")
 }
 
-pub fn delete_aof_file() {
+pub async fn delete_aof_file() {
     let aof_log_dir = get_aof_log_dir();
     if aof_log_dir.exists() {
         let file_path = aof_log_dir.join("appendonly.aof");
-        let _ = std::fs::remove_file(&file_path);
+        let _ = fs::remove_file(&file_path).await;
     }
 }
 
@@ -30,7 +30,7 @@ pub async fn write_aof(command: &Command) -> std::io::Result<()> {
     let log_path = get_aof_log_dir();
 
     if !log_path.exists() {
-        fs::create_dir_all(&log_path)?;
+        fs::create_dir_all(&log_path).await?;
     }
 
     let keys_value = match &command.args {
@@ -95,14 +95,14 @@ async fn dump_db_to_aof(db: &Db) -> Result<(), Error> {
     file.flush().await?;
 
     // Deleting actual aof file
-    delete_aof_file();
+    delete_aof_file().await;
 
     // Replacing aof file by dump file
-    fs::rename(&db_dump_aof, &aof_file)?;
+    fs::rename(&db_dump_aof, &aof_file).await?;
 
     // Deleting dump
     if db_dump_aof.exists() {
-        let _ = fs::remove_file(&db_dump_aof);
+        let _ = fs::remove_file(&db_dump_aof).await;
     }
 
     Ok(())
