@@ -231,3 +231,43 @@ fn test_lpush() {
 
     stop_server(&mut server);
 }
+
+#[test]
+fn test_lrange() {
+    let mut server = start_server();
+
+    // Push multiple values into a list
+    let response = send_command("LPUSH mylist C B A");
+    assert!(response.contains("(integer) 3"));
+
+    // Test retrieving full range (0 to -1)
+    let response = send_command("LRANGE mylist 0 -1");
+    assert!(response.contains("1) \"A\""));
+    assert!(response.contains("2) \"B\""));
+    assert!(response.contains("3) \"C\""));
+
+    // Test retrieving a sub-range
+    let response = send_command("LRANGE mylist 1 2");
+    assert!(response.contains("1) \"B\""));
+    assert!(response.contains("2) \"C\""));
+
+    // Test retrieving only the last element using negative index
+    let response = send_command("LRANGE mylist -1 -1");
+    assert!(response.contains("1) \"C\""));
+
+    // Test retrieving an out-of-range slice
+    let response = send_command("LRANGE mylist 10 20");
+    assert!(response.contains("(empty array)"));
+
+    // Test invalid key
+    let response = send_command("LRANGE unknownkey 0 -1");
+    assert!(response.contains("(empty array)"));
+
+    // Test non-list key
+    send_command("SET notalist 123");
+    let response = send_command("LRANGE notalist 0 -1");
+    assert!(response
+        .contains("(error) WRONGTYPE Operation against a key holding the wrong kind of value"));
+
+    stop_server(&mut server);
+}
