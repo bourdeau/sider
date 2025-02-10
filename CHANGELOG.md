@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.4.0](https://github.com/bourdeau/sider/compare/v0.3.1...v0.4.0) (2025-02-10)
+
+
+### Features
+
+* clean up database task (closes [#33](https://github.com/bourdeau/sider/issues/33)) ([#38](https://github.com/bourdeau/sider/issues/38)) ([82a92be](https://github.com/bourdeau/sider/commit/82a92be914359c99dcb88198a0a7ef1b9ce99f0f))
+* Configuration & CLI (closes [#34](https://github.com/bourdeau/sider/issues/34)) ([#36](https://github.com/bourdeau/sider/issues/36)) ([fb7a799](https://github.com/bourdeau/sider/commit/fb7a7998bc51c7273903f3fcc6b16675b135bdb9))
+* LPUSH & Logging ([#31](https://github.com/bourdeau/sider/issues/31)) ([22ef7af](https://github.com/bourdeau/sider/commit/22ef7af03b7c4674f3fa4237e464cc7b32545faf))
+
+
+### Bug Fixes
+
+* IO blocking reading files ([#43](https://github.com/bourdeau/sider/issues/43)) ([65fb016](https://github.com/bourdeau/sider/commit/65fb01602d2cdcd34be0d20b00095ca5d2cf9e3b))
+
 ## [0.3.1](https://github.com/bourdeau/sider/compare/v0.3.0...v0.3.1) (2025-02-08)
 
 
