@@ -54,10 +54,17 @@ pub enum CommandType {
     LRANGE,
     RPUSH,
     LPOP,
+    RPOP,
 }
 
 #[derive(Debug, Clone, Copy)]
 pub enum ListPushType {
     LPUSH,
     RPUSH,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum PopType {
+    LPOP,
+    RPOP,
 }
