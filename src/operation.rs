@@ -6,21 +6,11 @@ use crate::types::DbValue;
 use crate::types::Key;
 use crate::types::KeyList;
 use crate::types::ListPushType;
+use crate::types::PopType;
 use regex::Regex;
 
 const ERROR_LIST_KEY: &str =
     "(error) WRONGTYPE Operation against a key holding the wrong kind of value\n";
-
-async fn delete_expired_key(db: &Db, key: Key) -> bool {
-    let mut db_write = db.write().await;
-
-    if key.is_expired() {
-        db_write.remove(&key.name);
-        return true;
-    }
-
-    false
-}
 
 pub async fn pong() -> String {
     "PONG\n".to_string()
@@ -93,28 +83,6 @@ pub async fn flush_db(db: &Db) -> String {
     // delete aof file
     delete_aof_file().await;
     "OK\n".to_string()
-}
-
-/// Converts Redis-style glob pattern into a valid regex pattern
-// '*' becomes '.*'
-// '?' becomes '.'
-// '[' stays '[' (range starts)
-// ']' stays ']' (range ends)
-fn convert_redis_pattern_to_regex(pattern: &str) -> String {
-    let mut regex_pattern = String::from("^");
-
-    for c in pattern.chars() {
-        match c {
-            '*' => regex_pattern.push_str(".*"),
-            '?' => regex_pattern.push('.'),
-            '[' => regex_pattern.push('['),
-            ']' => regex_pattern.push(']'),
-            _ => regex_pattern.push_str(&regex::escape(&c.to_string())), // Escape other chars
-        }
-    }
-
-    regex_pattern.push('$');
-    regex_pattern
 }
 
 /// Returns keys matching the Redis-style pattern
@@ -199,43 +167,6 @@ pub async fn ttl(db: &Db, command: Command) -> String {
     };
 
     format!("(integer) {}\n", key.get_ttl())
-}
-
-pub async fn incr_decr(db: &Db, command: Command, inc: bool) -> String {
-    let key = match command.args {
-        CommandArgs::SingleKey(key) => key,
-        _ => return "ERR invalid command\n".to_string(),
-    };
-
-    let key_name = key.name.clone();
-
-    let mut db_write = db.write().await;
-
-    let key = match db_write.get_mut(&key_name) {
-        Some(DbValue::StringKey(key)) => key,
-        Some(DbValue::ListKey(_)) => return "ERR key is a list, not a string\n".to_string(),
-        None => {
-            let key = Key::new(key_name.clone(), "0".to_string(), None);
-            db_write.insert(key_name.clone(), DbValue::StringKey(key));
-            match db_write.get_mut(&key_name) {
-                Some(DbValue::StringKey(key)) => key,
-                Some(DbValue::ListKey(_)) => {
-                    return "ERR key is a list, not a string\n".to_string()
-                }
-                _ => return "ERR unexpected database error\n".to_string(),
-            }
-        }
-    };
-
-    let Ok(num) = key.value.as_deref().unwrap_or("0").parse::<i64>() else {
-        return "ERR value is not an integer\n".to_string();
-    };
-
-    let new_value = if inc { num + 1 } else { num - 1 };
-
-    key.value = Some(new_value.to_string());
-
-    format!("(integer) {}\n", new_value)
 }
 
 // Increases the numeric value stored at the key by one.
@@ -418,6 +349,23 @@ pub async fn lrange(db: &Db, command: Command) -> String {
 }
 
 pub async fn lpop(db: &Db, command: Command) -> String {
+    pop_list(db, command, PopType::LPOP).await
+}
+
+pub async fn rpop(db: &Db, command: Command) -> String {
+    pop_list(db, command, PopType::RPOP).await
+}
+
+fn format_list_response(data: Vec<String>) -> String {
+    data.iter()
+        .enumerate()
+        .map(|(i, item)| format!("{}) \"{}\"", i + 1, item))
+        .collect::<Vec<String>>()
+        .join("\n")
+        + "\n"
+}
+
+async fn pop_list(db: &Db, command: Command, pop_type: PopType) -> String {
     let key = match &command.args {
         CommandArgs::SingleKey(key) => key,
         _ => return "ERR invalid command\n".to_string(),
@@ -440,23 +388,95 @@ pub async fn lpop(db: &Db, command: Command) -> String {
         .parse::<usize>()
         .unwrap_or(1);
 
-    let removed: Vec<String> = key_db
+    let len = key_db.values.len();
+
+    let (start, end) = match pop_type {
+        PopType::LPOP => (0, nb),
+        PopType::RPOP => (len.saturating_sub(nb), len),
+    };
+
+    let mut removed: Vec<String> = key_db
         .values
-        .drain(0..nb.min(key_db.values.len()))
+        .drain(start..end.min(key_db.values.len()))
         .collect();
 
     if removed.is_empty() {
         return "(nil)\n".to_string();
     }
 
+    if let PopType::RPOP = pop_type {
+        removed.reverse();
+    }
+
     format_list_response(removed)
 }
 
-fn format_list_response(data: Vec<String>) -> String {
-    data.iter()
-        .enumerate()
-        .map(|(i, item)| format!("{}) \"{}\"", i + 1, item))
-        .collect::<Vec<String>>()
-        .join("\n")
-        + "\n"
+async fn incr_decr(db: &Db, command: Command, inc: bool) -> String {
+    let key = match command.args {
+        CommandArgs::SingleKey(key) => key,
+        _ => return "ERR invalid command\n".to_string(),
+    };
+
+    let key_name = key.name.clone();
+
+    let mut db_write = db.write().await;
+
+    let key = match db_write.get_mut(&key_name) {
+        Some(DbValue::StringKey(key)) => key,
+        Some(DbValue::ListKey(_)) => return "ERR key is a list, not a string\n".to_string(),
+        None => {
+            let key = Key::new(key_name.clone(), "0".to_string(), None);
+            db_write.insert(key_name.clone(), DbValue::StringKey(key));
+            match db_write.get_mut(&key_name) {
+                Some(DbValue::StringKey(key)) => key,
+                Some(DbValue::ListKey(_)) => {
+                    return "ERR key is a list, not a string\n".to_string()
+                }
+                _ => return "ERR unexpected database error\n".to_string(),
+            }
+        }
+    };
+
+    let Ok(num) = key.value.as_deref().unwrap_or("0").parse::<i64>() else {
+        return "ERR value is not an integer\n".to_string();
+    };
+
+    let new_value = if inc { num + 1 } else { num - 1 };
+
+    key.value = Some(new_value.to_string());
+
+    format!("(integer) {}\n", new_value)
+}
+
+/// Converts Redis-style glob pattern into a valid regex pattern
+// '*' becomes '.*'
+// '?' becomes '.'
+// '[' stays '[' (range starts)
+// ']' stays ']' (range ends)
+fn convert_redis_pattern_to_regex(pattern: &str) -> String {
+    let mut regex_pattern = String::from("^");
+
+    for c in pattern.chars() {
+        match c {
+            '*' => regex_pattern.push_str(".*"),
+            '?' => regex_pattern.push('.'),
+            '[' => regex_pattern.push('['),
+            ']' => regex_pattern.push(']'),
+            _ => regex_pattern.push_str(&regex::escape(&c.to_string())), // Escape other chars
+        }
+    }
+
+    regex_pattern.push('$');
+    regex_pattern
+}
+
+async fn delete_expired_key(db: &Db, key: Key) -> bool {
+    let mut db_write = db.write().await;
+
+    if key.is_expired() {
+        db_write.remove(&key.name);
+        return true;
+    }
+
+    false
 }
