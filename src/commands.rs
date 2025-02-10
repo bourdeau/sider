@@ -188,3 +188,17 @@ pub fn build_lrange_command(args: &[String]) -> Result<Command, String> {
         }),
     })
 }
+
+pub fn build_lpop_command(args: &[String]) -> Result<Command, String> {
+    if args.is_empty() {
+        return Err("ERR wrong number of arguments".to_string());
+    }
+    Ok(Command {
+        command_type: CommandType::LPOP,
+        args: CommandArgs::SingleKey(Key {
+            name: args[0].to_string(),
+            value: args.get(1).cloned(),
+            ..Default::default()
+        }),
+    })
+}

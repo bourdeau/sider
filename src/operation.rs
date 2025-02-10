@@ -134,6 +134,7 @@ pub async fn get_keys(db: &Db, command: Command) -> String {
     let mut results = vec![];
 
     let db_read = db.read().await;
+
     for key in db_read.keys() {
         if re.is_match(key) {
             results.push(key.clone());
@@ -144,13 +145,7 @@ pub async fn get_keys(db: &Db, command: Command) -> String {
         return "(empty array)\n".to_string();
     }
 
-    results
-        .iter()
-        .enumerate()
-        .map(|(i, key)| format!("{}) \"{}\"", i + 1, key))
-        .collect::<Vec<String>>()
-        .join("\n")
-        + "\n"
+    format_list_response(results)
 }
 
 pub async fn exists(db: &Db, command: Command) -> String {
@@ -413,16 +408,60 @@ pub async fn lrange(db: &Db, command: Command) -> String {
         return "(empty array)\r\n".to_string();
     }
 
-    let results = &key.values[min..max];
+    let results: &[String] = &key.values[min..max];
 
     if results.is_empty() {
         return "(empty array)\n".to_string();
     }
-
     results
         .iter()
         .enumerate()
         .map(|(i, key)| format!("{}) \"{}\"", i + 1, key))
+        .collect::<Vec<String>>()
+        .join("\n")
+        + "\n"
+    // format_list_response(results.to_vec())
+}
+
+pub async fn lpop(db: &Db, command: Command) -> String {
+    let key = match &command.args {
+        CommandArgs::SingleKey(key) => key,
+        _ => return "ERR invalid command\n".to_string(),
+    };
+
+    let key_name = key.name.clone();
+
+    let mut db_write = db.write().await;
+
+    let key_db = match db_write.get_mut(&key_name) {
+        Some(DbValue::ListKey(key)) => key,
+        Some(DbValue::StringKey(_)) => return ERROR_LIST_KEY.to_string(),
+        _ => return "(empty array)\n".to_string(),
+    };
+
+    let nb = key
+        .value
+        .as_deref()
+        .unwrap_or("1")
+        .parse::<usize>()
+        .unwrap_or(1);
+
+    let removed: Vec<String> = key_db
+        .values
+        .drain(0..nb.min(key_db.values.len()))
+        .collect();
+
+    if removed.is_empty() {
+        return "(nil)\n".to_string();
+    }
+
+    format_list_response(removed)
+}
+
+fn format_list_response(data: Vec<String>) -> String {
+    data.iter()
+        .enumerate()
+        .map(|(i, item)| format!("{} \"{}\"", i + 1, item))
         .collect::<Vec<String>>()
         .join("\n")
         + "\n"

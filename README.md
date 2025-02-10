@@ -61,7 +61,7 @@ SET first_name John
 | **LPUSH** | `LPUSH key values` | `LPUSH queue task1 task2 task3` | `1` (new length) | ✅ |
 | **LRANGE** | `LRANGE key start stop` | `LRANGE queue 0 -1` | `2` (new length) | ✅ |
 | **RPUSH** | `RPUSH key value` | `RPUSH queue "task2"` | `2` (new length) | ✅ |
-| **LPOP**  | `LPOP key` | `LPOP queue` | `"task1"` |   |
+| **LPOP**  | `LPOP key` | `LPOP queue` | `"task1"` | ✅ |
 | **RPOP**  | `RPOP key` | `RPOP queue` | `"task2"` |   |
 
 
