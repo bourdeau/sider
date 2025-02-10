@@ -90,7 +90,7 @@ pub async fn delete_key(db: &Db, command: Command) -> String {
 pub async fn flush_db(db: &Db) -> String {
     db.write().await.clear();
     // delete aof file
-    delete_aof_file();
+    delete_aof_file().await;
     "OK\n".to_string()
 }
 
