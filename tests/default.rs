@@ -233,6 +233,29 @@ fn test_lpush() {
 }
 
 #[test]
+fn test_rpush() {
+    let mut server = start_server();
+
+    let response = send_command("RPUSH names Alice Bob Charlie");
+    assert!(response.contains("(integer) 3"));
+
+    let response = send_command("RPUSH names David");
+    assert!(response.contains("(integer) 4"));
+
+    let response = send_command("RPUSH names Eve");
+    assert!(response.contains("(integer) 5"));
+
+    let response = send_command("RPUSH names Eve");
+    assert!(response.contains("(integer) 6"));
+
+    let response = send_command("GET names");
+    assert!(response
+        .contains("(error) WRONGTYPE Operation against a key holding the wrong kind of value"));
+
+    stop_server(&mut server);
+}
+
+#[test]
 fn test_lrange() {
     let mut server = start_server();
 

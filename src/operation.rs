@@ -5,6 +5,7 @@ use crate::types::CommandArgs;
 use crate::types::DbValue;
 use crate::types::Key;
 use crate::types::KeyList;
+use crate::types::ListPushType;
 use regex::Regex;
 
 const ERROR_LIST_KEY: &str =
@@ -319,7 +320,7 @@ pub async fn incrby(db: &Db, command: Command) -> String {
     format!("(integer) {}\n", new_value)
 }
 
-pub async fn lpush(db: &Db, command: Command) -> String {
+pub async fn push_to_list(db: &Db, command: Command, push_type: ListPushType) -> String {
     let key_list = match command.args {
         CommandArgs::KeyWithValues(key) => key,
         _ => return "ERR invalid command\n".to_string(),
@@ -332,13 +333,22 @@ pub async fn lpush(db: &Db, command: Command) -> String {
 
     match db_write.get_mut(&key_name) {
         Some(DbValue::ListKey(existing_list)) => {
-            new_values.reverse();
-            existing_list.values.splice(0..0, new_values);
+            match push_type {
+                ListPushType::LPUSH => {
+                    new_values.reverse();
+                    existing_list.values.splice(0..0, new_values);
+                }
+                ListPushType::RPUSH => {
+                    existing_list.values.extend(new_values);
+                }
+            }
             format!("(integer) {}\n", existing_list.values.len())
         }
         Some(_) => "ERR key exists as non-list type\n".to_string(),
         None => {
-            new_values.reverse();
+            if let ListPushType::LPUSH = push_type {
+                new_values.reverse();
+            }
             db_write.insert(
                 key_name.clone(),
                 DbValue::ListKey(KeyList {
@@ -349,6 +359,14 @@ pub async fn lpush(db: &Db, command: Command) -> String {
             format!("(integer) {}\n", new_values.len())
         }
     }
+}
+
+pub async fn lpush(db: &Db, command: Command) -> String {
+    push_to_list(db, command, ListPushType::LPUSH).await
+}
+
+pub async fn rpush(db: &Db, command: Command) -> String {
+    push_to_list(db, command, ListPushType::RPUSH).await
 }
 
 pub async fn lrange(db: &Db, command: Command) -> String {

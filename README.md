@@ -37,7 +37,7 @@ SET first_name John
 
 #### Expiration & Time-to-Live
 
-**Note:** expired key are deleted by calling `GET` or by a background task every 60 seconds.
+**Note:** expired keys are deleted by calling `GET` or by a background task every 60 seconds.
 
 | Command  | Syntax | Example | Output | Done |
 |----------|--------|---------|--------|------|
@@ -59,8 +59,8 @@ SET first_name John
 | Command  | Syntax | Example | Output | Done |
 |----------|--------|---------|--------|------|
 | **LPUSH** | `LPUSH key values` | `LPUSH queue task1 task2 task3` | `1` (new length) | ✅ |
-| **LRANGE** | `LRANGE key start stop` | `LRANGE queue 0 -1` | `2` (new length) | ✅  |
-| **RPUSH** | `RPUSH key value` | `RPUSH queue "task2"` | `2` (new length) |   |
+| **LRANGE** | `LRANGE key start stop` | `LRANGE queue 0 -1` | `2` (new length) | ✅ |
+| **RPUSH** | `RPUSH key value` | `RPUSH queue "task2"` | `2` (new length) | ✅ |
 | **LPOP**  | `LPOP key` | `LPOP queue` | `"task1"` |   |
 | **RPOP**  | `RPOP key` | `RPOP queue` | `"task2"` |   |
 

@@ -52,4 +52,11 @@ pub enum CommandType {
     INCRBY,
     LPUSH,
     LRANGE,
+    RPUSH,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum ListPushType {
+    LPUSH,
+    RPUSH,
 }
