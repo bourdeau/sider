@@ -4,7 +4,7 @@ use crate::types::CommandType;
 
 use crate::operation::{
     decr, delete_key, exists, expire, flush_db, get_key, get_keys, incr, incrby, lpush, lrange,
-    pong, set_key, ttl,
+    pong, rpush, set_key, ttl,
 };
 
 pub async fn process_command(command: String, db: &Db, restore: bool) -> String {
@@ -34,5 +34,6 @@ pub async fn process_command(command: String, db: &Db, restore: bool) -> String 
         CommandType::INCRBY => incrby(db, command).await,
         CommandType::LPUSH => lpush(db, command).await,
         CommandType::LRANGE => lrange(db, command).await,
+        CommandType::RPUSH => rpush(db, command).await,
     }
 }

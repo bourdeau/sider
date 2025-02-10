@@ -171,6 +171,10 @@ pub fn build_lpush_command(args: &[String]) -> Result<Command, String> {
     build_push_command(args, CommandType::LPUSH)
 }
 
+pub fn build_rpush_command(args: &[String]) -> Result<Command, String> {
+    build_push_command(args, CommandType::RPUSH)
+}
+
 pub fn build_lrange_command(args: &[String]) -> Result<Command, String> {
     if args.len() < 3 {
         return Err("ERR wrong number of arguments".to_string());
