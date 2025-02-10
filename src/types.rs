@@ -53,6 +53,7 @@ pub enum CommandType {
     LPUSH,
     LRANGE,
     RPUSH,
+    LPOP,
 }
 
 #[derive(Debug, Clone, Copy)]
