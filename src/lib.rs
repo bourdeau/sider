@@ -10,7 +10,6 @@ pub mod commands;
 pub mod config;
 pub mod database;
 pub mod keys;
-pub mod operation;
 pub mod parser;
 pub mod process;
 pub mod server;
