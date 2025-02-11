@@ -1,10 +1,10 @@
+use indexmap::IndexMap;
 use sider::aof::clean_up_db;
 use sider::config::get_config;
 use sider::database::delete_expired_keys;
 use sider::database::restore_from_aof;
 use sider::server::handle_client;
 use sider::types::Db;
-use std::collections::HashMap;
 use std::error::Error;
 use std::net::Ipv4Addr;
 use std::sync::Arc;
@@ -16,7 +16,7 @@ use tracing::{error, info};
 async fn main() -> Result<(), Box<dyn Error>> {
     tracing_subscriber::fmt::init();
 
-    let db: Db = Arc::new(RwLock::new(HashMap::new()));
+    let db: Db = Arc::new(RwLock::new(IndexMap::new()));
 
     // Config
     let config = get_config();

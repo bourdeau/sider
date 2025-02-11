@@ -56,7 +56,7 @@ pub async fn delete_key(db: &Db, command: Command) -> String {
     let mut deleted_count = 0;
 
     for key in keys {
-        if db_write.remove(&key).is_some() {
+        if db_write.swap_remove(&key).is_some() {
             deleted_count += 1;
         }
     }
@@ -267,7 +267,7 @@ pub async fn ttl(db: &Db, command: Command) -> String {
 // '?' becomes '.'
 // '[' stays '[' (range starts)
 // ']' stays ']' (range ends)
-fn convert_redis_pattern_to_regex(pattern: &str) -> String {
+pub fn convert_redis_pattern_to_regex(pattern: &str) -> String {
     let mut regex_pattern = String::from("^");
 
     for c in pattern.chars() {
@@ -284,120 +284,13 @@ fn convert_redis_pattern_to_regex(pattern: &str) -> String {
     regex_pattern
 }
 
-async fn delete_expired_key(db: &Db, key: Key) -> bool {
+pub async fn delete_expired_key(db: &Db, key: Key) -> bool {
     let mut db_write = db.write().await;
 
     if key.is_expired() {
-        db_write.remove(&key.name);
+        db_write.swap_remove(&key.name);
         return true;
     }
 
     false
-}
-
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::types::*;
-    use std::sync::Arc;
-    use tokio::sync::RwLock;
-
-    async fn setup_db() -> Db {
-        Arc::new(RwLock::new(std::collections::HashMap::new()))
-    }
-
-    #[tokio::test]
-    async fn test_get_key_invalid_command() {
-        let db = setup_db().await;
-        let command = Command { 
-            command_type: CommandType::SET, // Invalid for GET operation
-            args: CommandArgs::KeyWithValues(KeyList { name: "invalid".to_string(), values: vec![] }),
-        };
-        
-        let result = get_key(&db, command).await;
-        assert_eq!(result, "ERR invalid command\n");
-    }
-
-    #[tokio::test]
-    async fn test_get_key_not_found() {
-        let db = setup_db().await;
-        let command = Command { 
-            command_type: CommandType::GET,
-            args: CommandArgs::SingleKey(Key { name: "missing_key".to_string(), value: None, expires_at: None })
-        };
-        
-        let result = get_key(&db, command).await;
-        assert_eq!(result, "(nil)\n");
-    }
-
-    #[tokio::test]
-    async fn test_get_key_string_value() {
-        let db = setup_db().await;
-        let key_name = "my_key".to_string();
-        let value = "hello_world".to_string();
-
-        {
-            let mut db_write = db.write().await;
-            db_write.insert(key_name.clone(), DbValue::StringKey(Key { 
-                name: key_name.clone(), 
-                value: Some(value.clone()), 
-                expires_at: None 
-            }));
-        }
-
-        let command = Command { 
-            command_type: CommandType::GET,
-            args: CommandArgs::SingleKey(Key { name: key_name, value: None, expires_at: None })
-        };
-
-        let result = get_key(&db, command).await;
-        assert_eq!(result, "hello_world\n");
-    }
-
-    #[tokio::test]
-    async fn test_get_key_list_value() {
-        let db = setup_db().await;
-        let key_name = "list_key".to_string();
-
-        {
-            let mut db_write = db.write().await;
-            db_write.insert(key_name.clone(), DbValue::ListKey(KeyList { 
-                name: key_name.clone(), 
-                values: vec!["item1".to_string(), "item2".to_string()] 
-            }));
-        }
-
-        let command = Command { 
-            command_type: CommandType::GET,
-            args: CommandArgs::SingleKey(Key { name: key_name, value: None, expires_at: None })
-        };
-
-        let result = get_key(&db, command).await;
-        assert_eq!(result, ERROR_LIST_KEY.to_string());
-    }
-
-    #[tokio::test]
-    async fn test_get_key_expired() {
-        let db = setup_db().await;
-        let key_name = "expired_key".to_string();
-        let value = "old_value".to_string();
-
-        {
-            let mut db_write = db.write().await;
-            db_write.insert(key_name.clone(), DbValue::StringKey(Key { 
-                name: key_name.clone(), 
-                value: Some(value.clone()), 
-                expires_at: Some(0) // Expired timestamp
-            }));
-        }
-
-        let command = Command { 
-            command_type: CommandType::GET,
-            args: CommandArgs::SingleKey(Key { name: key_name, value: None, expires_at: None })
-        };
-
-        let result = get_key(&db, command).await;
-        assert_eq!(result, "(nil)\n");
-    }
 }

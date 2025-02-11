@@ -19,7 +19,7 @@ jobs:
       - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: stable
-      - run: RUST_BACKTRACE=1 cargo test --lib
+      - run: RUST_BACKTRACE=1 cargo test --tests ut
   
   tests-func:
     name: tests-func
@@ -29,4 +29,4 @@ jobs:
       - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: stable
-      - run: RUST_BACKTRACE=1 cargo test --tests -- --nocapture --test-threads=1
+      - run: RUST_BACKTRACE=1 cargo test --tests inte -- --nocapture --test-threads=1
