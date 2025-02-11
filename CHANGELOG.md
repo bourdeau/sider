@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/bourdeau/sider/compare/v0.4.0...v0.4.1) (2025-02-11)
+
+
+### Bug Fixes
+
+* IndexMap to preserve order & unit test ([#54](https://github.com/bourdeau/sider/issues/54)) ([e034745](https://github.com/bourdeau/sider/commit/e0347452a46d04dc286a843e42140ab4a7de2348))
+
 ## [0.4.0](https://github.com/bourdeau/sider/compare/v0.3.1...v0.4.0) (2025-02-10)
 
 
