@@ -1,11 +1,11 @@
-use crate::database::Db;
 use crate::parser::parse_command;
 use crate::types::CommandType;
+use crate::types::Db;
 
-use crate::operation::{
-    decr, delete_key, exists, expire, flush_db, get_key, get_keys, incr, incrby, lpop, lpush,
-    lrange, pong, rpop, rpush, set_key, ttl,
-};
+use crate::commands::db::*;
+use crate::commands::keys::*;
+use crate::commands::lists::*;
+use crate::commands::misc::*;
 
 pub async fn process_command(command: String, db: &Db, restore: bool) -> String {
     let parts: Vec<&str> = command.split_whitespace().collect();

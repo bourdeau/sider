@@ -1,5 +1,5 @@
-use crate::database::Db;
 use crate::process::process_command;
+use crate::types::Db;
 
 use std::error::Error;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};

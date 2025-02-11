@@ -1,8 +1,9 @@
 use sider::aof::clean_up_db;
 use sider::config::get_config;
 use sider::database::delete_expired_keys;
-use sider::database::{restore_from_aof, Db};
+use sider::database::restore_from_aof;
 use sider::server::handle_client;
+use sider::types::Db;
 use std::collections::HashMap;
 use std::error::Error;
 use std::net::Ipv4Addr;

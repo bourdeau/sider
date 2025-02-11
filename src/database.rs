@@ -1,13 +1,8 @@
 use crate::aof::get_aof_log_dir;
 use crate::process::process_command;
-use crate::types::DbValue;
-use std::collections::HashMap;
-use std::sync::Arc;
-use tokio::sync::RwLock;
+use crate::types::{Db, DbValue};
 use tokio::time::{self, Duration};
 use tracing::info;
-
-pub type Db = Arc<RwLock<HashMap<String, DbValue>>>;
 
 // Remove Key with expired ttl. ListKey don't have ttl for now
 pub async fn delete_expired_keys(db: Db) {
