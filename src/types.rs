@@ -1,8 +1,8 @@
-use std::collections::HashMap;
+use indexmap::IndexMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
-pub type Db = Arc<RwLock<HashMap<String, DbValue>>>;
+pub type Db = Arc<RwLock<IndexMap<String, DbValue>>>;
 
 #[derive(Debug, Clone)]
 pub enum DbValue {

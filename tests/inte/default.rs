@@ -1,5 +1,4 @@
-mod utils;
-use utils::{send_command, start_server, stop_server};
+use super::utils::{send_command, start_server, stop_server};
 
 #[test]
 fn test_basic_set_get() {

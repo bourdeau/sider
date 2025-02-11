@@ -56,7 +56,7 @@ pub async fn delete_key(db: &Db, command: Command) -> String {
     let mut deleted_count = 0;
 
     for key in keys {
-        if db_write.remove(&key).is_some() {
+        if db_write.swap_remove(&key).is_some() {
             deleted_count += 1;
         }
     }
@@ -267,7 +267,7 @@ pub async fn ttl(db: &Db, command: Command) -> String {
 // '?' becomes '.'
 // '[' stays '[' (range starts)
 // ']' stays ']' (range ends)
-fn convert_redis_pattern_to_regex(pattern: &str) -> String {
+pub fn convert_redis_pattern_to_regex(pattern: &str) -> String {
     let mut regex_pattern = String::from("^");
 
     for c in pattern.chars() {
@@ -284,11 +284,11 @@ fn convert_redis_pattern_to_regex(pattern: &str) -> String {
     regex_pattern
 }
 
-async fn delete_expired_key(db: &Db, key: Key) -> bool {
+pub async fn delete_expired_key(db: &Db, key: Key) -> bool {
     let mut db_write = db.write().await;
 
     if key.is_expired() {
-        db_write.remove(&key.name);
+        db_write.swap_remove(&key.name);
         return true;
     }
 

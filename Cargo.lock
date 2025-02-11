@@ -793,6 +793,7 @@ dependencies = [
  "clap",
  "config",
  "dirs",
+ "indexmap",
  "once_cell",
  "regex",
  "tokio",
