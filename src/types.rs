@@ -10,14 +10,14 @@ pub enum DbValue {
     ListKey(KeyList),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum CommandArgs {
     SingleKey(Key),
     KeyWithValues(KeyList),
     MultipleKeys(Vec<Key>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Command {
     pub command_type: CommandType,
     pub args: CommandArgs,
@@ -36,12 +36,12 @@ pub struct KeyList {
     pub values: Vec<String>,
 }
 
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub enum CommandType {
     PONG,
     GET,
     SET,
-    DELETE,
+    DEL,
     FLUSHDB,
     KEYS,
     EXISTS,

@@ -55,7 +55,7 @@ pub fn build_delete_command(args: &[String]) -> Result<Command, String> {
         return Err("ERR wrong number of arguments".to_string());
     }
     Ok(Command {
-        command_type: CommandType::DELETE,
+        command_type: CommandType::DEL,
         args: CommandArgs::MultipleKeys(
             args.iter()
                 .map(|key| Key {

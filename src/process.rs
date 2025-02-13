@@ -23,7 +23,7 @@ pub async fn process_command(command: String, db: &Db, restore: bool) -> String 
         CommandType::PONG => pong().await,
         CommandType::GET => get_key(db, command).await,
         CommandType::SET => set_key(db, command).await,
-        CommandType::DELETE => delete_key(db, command).await,
+        CommandType::DEL => delete_key(db, command).await,
         CommandType::FLUSHDB => flush_db(db).await,
         CommandType::KEYS => get_keys(db, command).await,
         CommandType::EXISTS => exists(db, command).await,
