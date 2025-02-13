@@ -48,7 +48,7 @@ mod tests {
         }
 
         let command = Command {
-            command_type: CommandType::DELETE,
+            command_type: CommandType::DEL,
             args: CommandArgs::SingleKey(Key {
                 name: key_name.clone(),
                 value: None,
