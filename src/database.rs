@@ -16,6 +16,7 @@ pub async fn delete_expired_keys(db: Db) {
         db_write.retain(|_, value| match value {
             DbValue::StringKey(key) => !key.is_expired(),
             DbValue::ListKey(_) => true,
+            DbValue::HashKey(_) => true,
         });
     }
 }

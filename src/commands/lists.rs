@@ -1,4 +1,4 @@
-use crate::commands::utils::{format_list_response, ERROR_LIST_KEY};
+use crate::commands::utils::{format_list_response, ERROR_KEY_TYPE};
 use crate::types::{Command, CommandArgs, Db, DbValue, KeyList, ListPushType, PopType};
 
 pub async fn push_to_list(db: &Db, command: Command, push_type: ListPushType) -> String {
@@ -25,7 +25,6 @@ pub async fn push_to_list(db: &Db, command: Command, push_type: ListPushType) ->
             }
             format!("(integer) {}\n", existing_list.values.len())
         }
-        Some(_) => "ERR key exists as non-list type\n".to_string(),
         None => {
             if let ListPushType::LPUSH = push_type {
                 new_values.reverse();
@@ -39,6 +38,7 @@ pub async fn push_to_list(db: &Db, command: Command, push_type: ListPushType) ->
             );
             format!("(integer) {}\n", new_values.len())
         }
+        Some(_) => ERROR_KEY_TYPE.to_string(),
     }
 }
 
@@ -72,7 +72,7 @@ pub async fn lrange(db: &Db, command: Command) -> String {
 
     let key = match db_read.get(&key_name) {
         Some(DbValue::ListKey(key)) => key,
-        Some(DbValue::StringKey(_)) => return ERROR_LIST_KEY.to_string(),
+        Some(DbValue::StringKey(_)) => return ERROR_KEY_TYPE.to_string(),
         _ => return "(empty array)\n".to_string(),
     };
 
@@ -123,7 +123,7 @@ async fn pop_list(db: &Db, command: Command, pop_type: PopType) -> String {
 
     let key_db = match db_write.get_mut(&key_name) {
         Some(DbValue::ListKey(key)) => key,
-        Some(DbValue::StringKey(_)) => return ERROR_LIST_KEY.to_string(),
+        Some(DbValue::StringKey(_)) => return ERROR_KEY_TYPE.to_string(),
         _ => return "(empty array)\n".to_string(),
     };
 
