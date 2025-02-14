@@ -1,6 +1,6 @@
 use indexmap::IndexMap;
 
-use crate::types::{Command, CommandArgs, CommandType, Key, KeyHash, KeyList};
+use crate::types::{Command, CommandArgs, CommandType, HashField, Key, KeyHash, KeyList};
 
 pub fn build_pong_command() -> Command {
     Command {
@@ -237,6 +237,20 @@ pub fn build_hset_command(args: &[String]) -> Result<Command, String> {
         args: CommandArgs::HashKey(KeyHash {
             name: key_name,
             fields,
+        }),
+    })
+}
+
+pub fn build_hget_command(args: &[String]) -> Result<Command, String> {
+    if args.len() != 2 {
+        return Err("ERR wrong number of arguments".to_string());
+    }
+
+    Ok(Command {
+        command_type: CommandType::HGET,
+        args: CommandArgs::HashField(HashField {
+            key: args[0].clone(),
+            field: args[1].clone(),
         }),
     })
 }

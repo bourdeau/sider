@@ -52,6 +52,9 @@ pub async fn write_aof(command: &Command) -> std::io::Result<()> {
                 .join(" ");
             format!("{} {}", hash_key.name, fields)
         }
+        CommandArgs::HashField(hash_field) => {
+            format!("HGET {} {}", hash_field.key, hash_field.field)
+        }
     };
 
     let formatted = format!("{:?} {}\n", command.command_type, keys_value);

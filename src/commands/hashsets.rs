@@ -44,3 +44,21 @@ pub async fn hset(db: &Db, command: Command) -> String {
 
     format!("(integer) {}\n", nb)
 }
+
+pub async fn hget(db: &Db, command: Command) -> String {
+    let (hash_name, field_name) = match &command.args {
+        CommandArgs::HashField(hash) => (&hash.key, &hash.field),
+        _ => return "ERR invalid command\n".to_string(),
+    };
+
+    let db_read = db.read().await;
+
+    match db_read.get(hash_name) {
+        Some(DbValue::HashKey(hash)) => match hash.fields.get(field_name) {
+            Some(value) => format!("{}\n", value),
+            None => "(nil)\n".to_string(),
+        },
+        None => "(nil)\n".to_string(),
+        Some(_) => "ERR wrong type\n".to_string(),
+    }
+}

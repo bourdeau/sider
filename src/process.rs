@@ -39,5 +39,6 @@ pub async fn process_command(command: String, db: &Db, restore: bool) -> String 
         CommandType::LPOP => lpop(db, command).await,
         CommandType::RPOP => rpop(db, command).await,
         CommandType::HSET => hset(db, command).await,
+        CommandType::HGET => hget(db, command).await,
     }
 }

@@ -1,334 +1,209 @@
-#[cfg(test)]
-mod tests {
-    use indexmap::IndexMap;
-    use sider::commands::keys::*;
-    use sider::types::*;
-    use std::sync::Arc;
-    use tokio::sync::RwLock;
+use super::utils::{send_command, start_server, stop_server};
 
-    async fn setup_db() -> Db {
-        Arc::new(RwLock::new(IndexMap::new()))
-    }
+#[test]
+fn test_basic_set_get() {
+    let mut server = start_server();
 
-    #[tokio::test]
-    async fn test_set_key() {
-        let db = setup_db().await;
-        let key = Key {
-            name: "my_key".to_string(),
-            value: Some("value".to_string()),
-            expires_at: None,
-        };
-        let command = Command {
-            command_type: CommandType::SET,
-            args: CommandArgs::SingleKey(key),
-        };
+    let response = send_command("SET name Alice");
+    assert!(response.contains("OK"));
 
-        let result = set_key(&db, command).await;
-        assert_eq!(result, "OK\n");
+    let response = send_command("GET name");
+    assert!(response.contains("Alice"));
 
-        let db_read = db.read().await;
-        assert!(db_read.contains_key("my_key"));
-    }
+    stop_server(&mut server);
+}
 
-    #[tokio::test]
-    async fn test_delete_key() {
-        let db = setup_db().await;
-        let key_name = "key_to_delete".to_string();
+#[test]
+fn test_delete_key() {
+    let mut server = start_server();
 
-        {
-            let mut db_write = db.write().await;
-            db_write.insert(
-                key_name.clone(),
-                DbValue::StringKey(Key {
-                    name: key_name.clone(),
-                    value: Some("value".to_string()),
-                    expires_at: None,
-                }),
-            );
-        }
+    send_command("SET city Paris");
+    let response = send_command("DEL city");
+    assert!(response.contains("(integer) 1"));
 
-        let command = Command {
-            command_type: CommandType::DEL,
-            args: CommandArgs::SingleKey(Key {
-                name: key_name.clone(),
-                value: None,
-                expires_at: None,
-            }),
-        };
+    let response = send_command("GET city");
+    assert!(response.contains("(nil)"));
 
-        let result = delete_key(&db, command).await;
-        assert_eq!(result, "(integer) 1\n");
+    stop_server(&mut server);
+}
 
-        let db_read = db.read().await;
-        assert!(!db_read.contains_key(&key_name));
-    }
+#[test]
+fn test_delete_multiple_keys() {
+    let mut server = start_server();
 
-    #[tokio::test]
-    async fn test_incr_new_key() {
-        let db = setup_db().await;
-        let command = Command {
-            command_type: CommandType::INCR,
-            args: CommandArgs::SingleKey(Key {
-                name: "counter".to_string(),
-                value: None,
-                expires_at: None,
-            }),
-        };
+    send_command("SET first_name Alice");
+    send_command("SET last_name Smith");
+    send_command("SET age 32");
 
-        let result = incr(&db, command).await;
-        assert_eq!(result, "(integer) 1\n");
-    }
+    let response = send_command("DEL first_name last_name age");
 
-    #[tokio::test]
-    async fn test_incr_existing_key() {
-        let db = setup_db().await;
-        let key_name = "counter".to_string();
+    assert!(response.contains("(integer) 3"));
 
-        {
-            let mut db_write = db.write().await;
-            db_write.insert(
-                key_name.clone(),
-                DbValue::StringKey(Key {
-                    name: key_name.clone(),
-                    value: Some("5".to_string()),
-                    expires_at: None,
-                }),
-            );
-        }
+    stop_server(&mut server);
+}
 
-        let command = Command {
-            command_type: CommandType::INCR,
-            args: CommandArgs::SingleKey(Key {
-                name: key_name,
-                value: None,
-                expires_at: None,
-            }),
-        };
+#[test]
+fn test_key_regex() {
+    let mut server = start_server();
 
-        let result = incr(&db, command).await;
-        assert_eq!(result, "(integer) 6\n");
-    }
+    send_command("SET first_name Alice");
+    send_command("SET last_name Smith");
+    send_command("SET age 32");
 
-    #[tokio::test]
-    async fn test_decr_new_key() {
-        let db = setup_db().await;
-        let command = Command {
-            command_type: CommandType::DECR,
-            args: CommandArgs::SingleKey(Key {
-                name: "counter".to_string(),
-                value: None,
-                expires_at: None,
-            }),
-        };
+    let response = send_command("KEYS *");
+    assert!(response.contains("first_name"));
+    assert!(response.contains("last_name"));
 
-        let result = decr(&db, command).await;
-        assert_eq!(result, "(integer) -1\n");
-    }
+    let response = send_command("KEYS first*");
+    assert!(response.contains("first_name"));
 
-    #[tokio::test]
-    async fn test_incrby() {
-        let db = setup_db().await;
-        let key_name = "counter".to_string();
+    let response = send_command("KEYS *name*");
+    assert!(response.contains("first_name"));
+    assert!(response.contains("last_name"));
 
-        {
-            let mut db_write = db.write().await;
-            db_write.insert(
-                key_name.clone(),
-                DbValue::StringKey(Key {
-                    name: key_name.clone(),
-                    value: Some("10".to_string()),
-                    expires_at: None,
-                }),
-            );
-        }
+    let response = send_command("KEYS f?rst_name");
+    assert!(response.contains("first_name"));
 
-        let command = Command {
-            command_type: CommandType::INCRBY,
-            args: CommandArgs::SingleKey(Key {
-                name: key_name,
-                value: Some("5".to_string()),
-                expires_at: None,
-            }),
-        };
+    send_command("FLUSHDB");
+    std::thread::sleep(std::time::Duration::from_secs(10));
 
-        let result = incrby(&db, command).await;
-        assert_eq!(result, "(integer) 15\n");
-    }
+    let response = send_command("KEYS *");
+    assert!(
+        response.contains("(empty array)"),
+        "Test failed! Actual response: {:?}",
+        response
+    );
 
-    #[tokio::test]
-    async fn test_get_keys() {
-        let db = setup_db().await;
+    stop_server(&mut server);
+}
 
-        {
-            let mut db_write = db.write().await;
-            db_write.insert(
-                "foo".to_string(),
-                DbValue::StringKey(Key {
-                    name: "foo".to_string(),
-                    value: Some("bar".to_string()),
-                    expires_at: None,
-                }),
-            );
-            db_write.insert(
-                "foobar".to_string(),
-                DbValue::StringKey(Key {
-                    name: "foobar".to_string(),
-                    value: Some("baz".to_string()),
-                    expires_at: None,
-                }),
-            );
-        }
+#[test]
+fn test_exists() {
+    let mut server = start_server();
 
-        let command = Command {
-            command_type: CommandType::KEYS,
-            args: CommandArgs::SingleKey(Key {
-                name: "foo*".to_string(),
-                value: None,
-                expires_at: None,
-            }),
-        };
+    send_command("SET first_name Alice");
+    send_command("SET last_name Smith");
+    send_command("SET age 32");
 
-        let result = get_keys(&db, command).await;
-        assert_eq!(result, "1) \"foo\"\n2) \"foobar\"\n");
-    }
+    let response = send_command("EXISTS first_name");
+    assert!(response.contains("1"));
 
-    #[tokio::test]
-    async fn test_exists() {
-        let db = setup_db().await;
+    let response = send_command("EXISTS middle_name");
+    assert!(response.contains("0"));
 
-        {
-            let mut db_write = db.write().await;
-            db_write.insert(
-                "key1".to_string(),
-                DbValue::StringKey(Key {
-                    name: "key1".to_string(),
-                    value: Some("val1".to_string()),
-                    expires_at: None,
-                }),
-            );
-        }
+    let response = send_command("EXISTS first_name last_name middle_name");
+    assert!(response.contains("2"));
 
-        let command = Command {
-            command_type: CommandType::EXISTS,
-            args: CommandArgs::MultipleKeys(vec![
-                Key {
-                    name: "key1".to_string(),
-                    value: None,
-                    expires_at: None,
-                },
-                Key {
-                    name: "key2".to_string(),
-                    value: None,
-                    expires_at: None,
-                },
-            ]),
-        };
+    let response = send_command("EXISTS first_name last_name age");
+    assert!(response.contains("3"));
 
-        let result = exists(&db, command).await;
-        assert_eq!(result, "1\n");
-    }
+    stop_server(&mut server);
+}
 
-    #[tokio::test]
-    async fn test_expire() {
-        let db = setup_db().await;
-        let key_name = "temp_key".to_string();
+#[test]
+fn test_expire() {
+    let mut server = start_server();
 
-        {
-            let mut db_write = db.write().await;
-            db_write.insert(
-                key_name.clone(),
-                DbValue::StringKey(Key {
-                    name: key_name.clone(),
-                    value: Some("value".to_string()),
-                    expires_at: None,
-                }),
-            );
-        }
+    send_command("SET name Smith");
+    let response = send_command("EXPIRE name 3");
+    assert!(response.contains("(integer) 1"));
 
-        let command = Command {
-            command_type: CommandType::EXPIRE,
-            args: CommandArgs::SingleKey(Key {
-                name: key_name.clone(),
-                value: None,
-                expires_at: Some(1000),
-            }),
-        };
+    stop_server(&mut server);
+}
 
-        let result = expire(&db, command).await;
-        assert_eq!(result, "(integer) 1\n");
-    }
+#[test]
+fn test_ttl() {
+    let mut server = start_server();
 
-    #[tokio::test]
-    async fn test_ttl() {
-        let db = setup_db().await;
-        let key_name = "temp_key".to_string();
+    send_command("SET name Smith");
+    send_command("EXPIRE name 3");
 
-        {
-            let mut db_write = db.write().await;
-            db_write.insert(
-                key_name.clone(),
-                DbValue::StringKey(Key {
-                    name: key_name.clone(),
-                    value: Some("value".to_string()),
-                    expires_at: Some(5000),
-                }),
-            );
-        }
+    std::thread::sleep(std::time::Duration::from_secs(1));
 
-        let command = Command {
-            command_type: CommandType::TTL,
-            args: CommandArgs::SingleKey(Key {
-                name: key_name,
-                value: None,
-                expires_at: None,
-            }),
-        };
+    // (integer) 2
+    let ttl = send_command("TTL name");
 
-        let result = ttl(&db, command).await;
-        assert!(result.starts_with("(integer) "));
-    }
+    let ttl_int: i32 = ttl
+        .split_whitespace()
+        .last()
+        .and_then(|s| s.parse::<i32>().ok())
+        .expect("Failed to parse TTL value");
 
-    #[test]
-    fn test_convert_redis_pattern_to_regex() {
-        let pattern = "foo*";
-        let regex = convert_redis_pattern_to_regex(pattern);
-        assert_eq!(regex, "^foo.*$");
+    assert!(ttl_int < 3);
 
-        let pattern = "bar?";
-        let regex = convert_redis_pattern_to_regex(pattern);
-        assert_eq!(regex, "^bar.$");
+    stop_server(&mut server);
+}
 
-        let pattern = "[abc]";
-        let regex = convert_redis_pattern_to_regex(pattern);
-        assert_eq!(regex, "^[abc]$");
-    }
+#[test]
+fn test_background_delete() {
+    let mut server = start_server();
 
-    #[tokio::test]
-    async fn test_delete_expired_key() {
-        let db = setup_db().await;
-        let key_name = "expired_key".to_string();
+    send_command("SET name Smith");
+    send_command("EXPIRE name 10");
 
-        {
-            let mut db_write = db.write().await;
-            db_write.insert(
-                key_name.clone(),
-                DbValue::StringKey(Key {
-                    name: key_name.clone(),
-                    value: Some("value".to_string()),
-                    expires_at: Some(0),
-                }),
-            );
-        }
+    // Background delete occurs every 60 secs
+    std::thread::sleep(std::time::Duration::from_secs(70));
 
-        let key = Key {
-            name: key_name.clone(),
-            value: Some("value".to_string()),
-            expires_at: Some(0),
-        };
-        let result = delete_expired_key(&db, key).await;
-        assert!(result);
+    let response = send_command("EXISTS name");
+    assert!(response.contains("0"));
 
-        let db_read = db.read().await;
-        assert!(!db_read.contains_key(&key_name));
-    }
+    stop_server(&mut server);
+}
+
+#[test]
+fn test_incr() {
+    let mut server = start_server();
+
+    // Create a key if it doesn't exist
+    let response = send_command("INCR counter");
+    assert!(response.contains("(integer) 1"));
+
+    // Increment the key
+    let response = send_command("INCR counter");
+    assert!(response.contains("(integer) 2"));
+
+    let response = send_command("GET counter");
+    assert!(response.contains("2"));
+
+    stop_server(&mut server);
+}
+
+#[test]
+fn test_decr() {
+    let mut server = start_server();
+
+    // Create a key if it doesn't exist
+    let response = send_command("DECR another_counter");
+    assert!(response.contains("(integer) -1"));
+
+    // Decrement the key
+    let response = send_command("DECR another_counter");
+    assert!(response.contains("(integer) -2"));
+
+    let response = send_command("GET another_counter");
+    assert!(response.contains("-2"));
+
+    stop_server(&mut server);
+}
+
+#[test]
+fn test_incrby() {
+    let mut server = start_server();
+
+    // Create a key if it doesn't exist
+    let response = send_command("INCRBY incrby 5");
+    assert!(response.contains("(integer) 5"));
+
+    // Increment the key by 10
+    let response = send_command("INCRBY incrby 10");
+    assert!(response.contains("(integer) 15"));
+
+    let response = send_command("GET incrby");
+    assert!(response.contains("15"));
+
+    // Decrement the key by 100
+    let response = send_command("INCRBY incrby -100");
+    assert!(response.contains("(integer) -85"));
+
+    stop_server(&mut server);
 }
