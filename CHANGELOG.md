@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.5.0](https://github.com/bourdeau/sider/compare/v0.4.1...v0.5.0) (2025-02-14)
+
+
+### Features
+
+* HGET ([#62](https://github.com/bourdeau/sider/issues/62)) ([78f13e6](https://github.com/bourdeau/sider/commit/78f13e6b0dc35d7380ce92834eb11c584e9aecc9))
+* HGETALL ([#65](https://github.com/bourdeau/sider/issues/65)) ([ebf4d6b](https://github.com/bourdeau/sider/commit/ebf4d6bbabd5673d88aa0281db0555d98810bb08))
+* HSET ([#59](https://github.com/bourdeau/sider/issues/59)) ([2face4c](https://github.com/bourdeau/sider/commit/2face4c2e73cddde541647133c0aee6598a60ff0))
+
 ## [0.4.1](https://github.com/bourdeau/sider/compare/v0.4.0...v0.4.1) (2025-02-11)
 
 
