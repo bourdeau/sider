@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/bourdeau/sider/compare/v0.4.1...v0.5.0) (2025-02-14)
+
+
+### Features
+
+* HSET ([#59](https://github.com/bourdeau/sider/issues/59)) ([2face4c](https://github.com/bourdeau/sider/commit/2face4c2e73cddde541647133c0aee6598a60ff0))
+
 ## [0.4.1](https://github.com/bourdeau/sider/compare/v0.4.0...v0.4.1) (2025-02-11)
 
 
