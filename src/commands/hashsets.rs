@@ -84,3 +84,34 @@ pub async fn hgetall(db: &Db, command: Command) -> String {
 
     format_list_response(results)
 }
+
+pub async fn hdel(db: &Db, command: Command) -> String {
+    let key = match &command.args {
+        CommandArgs::KeyWithValues(key) => key,
+        _ => return "ERR invalid command\n".to_string(),
+    };
+
+    let key_name = key.name.clone();
+    let fields = key.values.clone();
+
+    let mut db_write = db.write().await;
+
+    match db_write.get_mut(&key_name) {
+        Some(DbValue::HashKey(hash)) => {
+            let mut deleted_count = 0;
+            for field in fields {
+                if hash.fields.swap_remove(&field).is_some() {
+                    deleted_count += 1;
+                }
+            }
+
+            if hash.fields.is_empty() {
+                db_write.swap_remove(&key_name);
+            }
+
+            format!("(integer) {}\n", deleted_count)
+        }
+        Some(_) => "ERR wrong type\n".to_string(),
+        None => "(integer) 0\n".to_string(),
+    }
+}

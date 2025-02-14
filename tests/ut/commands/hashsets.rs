@@ -235,4 +235,73 @@ mod tests {
         let result = hgetall(&db, command).await;
         assert_eq!(result, "(empty array)\n");
     }
+
+    #[tokio::test]
+    async fn test_hdel() {
+        let db = setup_db().await;
+
+        let key = KeyHash {
+            name: "hdelhash".to_string(),
+            fields: IndexMap::from([
+                ("last_name".to_string(), "Smith".to_string()),
+                ("first_name".to_string(), "John".to_string()),
+                ("age".to_string(), "21".to_string()),
+            ]),
+        };
+
+        let command = Command {
+            command_type: CommandType::HSET,
+            args: CommandArgs::HashKey(key),
+        };
+
+        let result = hset(&db, command).await;
+        assert_eq!(result, "(integer) 3\n");
+
+        let command = Command {
+            command_type: CommandType::HDEL,
+            args: CommandArgs::KeyWithValues(KeyList {
+                name: "hdelhash".to_string(),
+                values: vec!["last_name".to_string(), "first_name".to_string()],
+            }),
+        };
+
+        let result = hdel(&db, command).await;
+        assert!(result.contains("(integer) 2"));
+
+        let command = Command {
+            command_type: CommandType::HDEL,
+            args: CommandArgs::KeyWithValues(KeyList {
+                name: "hdelhash".to_string(),
+                values: vec!["non_existent_field".to_string()],
+            }),
+        };
+
+        let result = hdel(&db, command).await;
+        assert_eq!(result, "(integer) 0\n");
+
+        let command = Command {
+            command_type: CommandType::HDEL,
+            args: CommandArgs::KeyWithValues(KeyList {
+                name: "unknownhash".to_string(),
+                values: vec!["some_field".to_string()],
+            }),
+        };
+
+        let result = hdel(&db, command).await;
+        assert_eq!(result, "(integer) 0\n");
+
+        let command = Command {
+            command_type: CommandType::HDEL,
+            args: CommandArgs::KeyWithValues(KeyList {
+                name: "hdelhash".to_string(),
+                values: vec!["age".to_string()],
+            }),
+        };
+
+        let result = hdel(&db, command).await;
+        assert!(result.contains("(integer) 1"));
+
+        let db_read = db.read().await;
+        assert!(!db_read.contains_key("hdelhash"));
+    }
 }

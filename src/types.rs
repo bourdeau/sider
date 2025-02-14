@@ -74,6 +74,7 @@ pub enum CommandType {
     HSET,
     HGET,
     HGETALL,
+    HDEL,
 }
 
 #[derive(Debug, Clone, Copy)]
