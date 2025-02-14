@@ -254,3 +254,14 @@ pub fn build_hget_command(args: &[String]) -> Result<Command, String> {
         }),
     })
 }
+
+pub fn build_hgetall_command(args: &[String]) -> Result<Command, String> {
+    if args.is_empty() {
+        return Err("ERR wrong number of arguments".to_string());
+    }
+
+    Ok(Command {
+        command_type: CommandType::HGETALL,
+        args: CommandArgs::KeyName(args[0].clone()),
+    })
+}
