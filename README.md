@@ -73,8 +73,8 @@ SET first_name John
 |----------|--------|---------|--------|------|
 | **HSET**  | `HSET key field value` | `HSET user:1 name "Alice"` | `1` | ✅ |
 | **HGET**  | `HGET key field` | `HGET user:1 name` | `"Alice"` | ✅ |
-| **HDEL**  | `HDEL key field` | `HDEL user:1 name` | `1` |   |
-| **HGETALL** | `HGETALL key` | `HGETALL user:1` | `["name", "Alice"]` |   |
+| **HDEL**  | `HDEL key field` | `HDEL user:1 name` | `1` | ✅ |
+| **HGETALL** | `HGETALL key` | `HGETALL user:1` | `["name", "Alice"]` | ✅ |
 
 
 #### Sets

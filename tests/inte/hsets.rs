@@ -55,3 +55,49 @@ fn test_hgetall() {
 
     stop_server(&mut server);
 }
+
+#[test]
+fn test_hdel() {
+    let mut server = start_server();
+
+    let response =
+        send_command("HSET myhashdel last_name Smith first_name John age 21 city Paris");
+    assert!(response.contains("(integer) 4"));
+
+    let response = send_command("HGETALL myhashdel");
+    assert!(response.contains("last_name"));
+    assert!(response.contains("Smith"));
+    assert!(response.contains("first_name"));
+    assert!(response.contains("John"));
+    assert!(response.contains("age"));
+    assert!(response.contains("21"));
+    assert!(response.contains("city"));
+    assert!(response.contains("Paris"));
+
+    let response = send_command("HDEL myhashdel age");
+    assert!(response.contains("(integer) 1"));
+
+    let response = send_command("HGETALL myhashdel");
+    assert!(!response.contains("age"));
+    assert!(!response.contains("21"));
+
+    let response = send_command("HDEL myhashdel last_name city");
+    assert!(response.contains("(integer) 2"));
+
+    let response = send_command("HGETALL myhashdel");
+    assert!(!response.contains("last_name"));
+    assert!(!response.contains("Smith"));
+    assert!(!response.contains("city"));
+    assert!(!response.contains("Paris"));
+
+    let response = send_command("HDEL myhashdel first_name");
+    assert!(response.contains("(integer) 1"));
+
+    let response = send_command("HGETALL myhashdel");
+    assert!(response.contains("(empty array)"));
+
+    let response = send_command("HDEL non_existing_hash some_field");
+    assert!(response.contains("(integer) 0"));
+
+    stop_server(&mut server);
+}

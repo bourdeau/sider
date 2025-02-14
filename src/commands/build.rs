@@ -265,3 +265,17 @@ pub fn build_hgetall_command(args: &[String]) -> Result<Command, String> {
         args: CommandArgs::KeyName(args[0].clone()),
     })
 }
+
+pub fn build_hdel_command(args: &[String]) -> Result<Command, String> {
+    if args.len() < 2 {
+        return Err("ERR wrong number of arguments".to_string());
+    }
+
+    Ok(Command {
+        command_type: CommandType::HDEL,
+        args: CommandArgs::KeyWithValues(KeyList {
+            name: args[0].clone(),
+            values: args.iter().skip(1).cloned().collect::<Vec<String>>(),
+        }),
+    })
+}
