@@ -1,8 +1,8 @@
 #[cfg(test)]
 mod tests {
     use indexmap::IndexMap;
-    use sider::types::*;
     use sider::commands::db::*;
+    use sider::types::*;
     use std::sync::Arc;
     use tokio::sync::RwLock;
 
@@ -16,8 +16,22 @@ mod tests {
 
         {
             let mut db_write = db.write().await;
-            db_write.insert("key1".to_string(), DbValue::StringKey(Key { name: "key1".to_string(), value: Some("value1".to_string()), expires_at: None }));
-            db_write.insert("key2".to_string(), DbValue::StringKey(Key { name: "key2".to_string(), value: Some("value2".to_string()), expires_at: None }));
+            db_write.insert(
+                "key1".to_string(),
+                DbValue::StringKey(Key {
+                    name: "key1".to_string(),
+                    value: Some("value1".to_string()),
+                    expires_at: None,
+                }),
+            );
+            db_write.insert(
+                "key2".to_string(),
+                DbValue::StringKey(Key {
+                    name: "key2".to_string(),
+                    value: Some("value2".to_string()),
+                    expires_at: None,
+                }),
+            );
         }
 
         {

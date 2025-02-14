@@ -24,10 +24,10 @@ pub async fn hset(db: &Db, command: Command) -> String {
     let nb = match key {
         Some(DbValue::HashKey(mut k)) => {
             let before_len = k.fields.len();
-            k.fields.extend(key_values.clone()); // Adds new fields, updates old ones
+            k.fields.extend(key_values.clone());
             let after_len = k.fields.len();
             db_write.insert(key_name, DbValue::HashKey(k));
-            after_len - before_len // Only count new fields
+            after_len - before_len
         }
         None => {
             db_write.insert(
@@ -37,7 +37,7 @@ pub async fn hset(db: &Db, command: Command) -> String {
                     fields: key_values.clone(),
                 }),
             );
-            key_values.len() // All fields are new in this case
+            key_values.len()
         }
         Some(_) => return ERROR_KEY_TYPE.to_string(),
     };
