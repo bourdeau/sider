@@ -26,6 +26,8 @@ pub fn get_aof_file() -> PathBuf {
     log_path.join("appendonly.aof")
 }
 
+// This is a mess. It writes commands which fetch keys
+// instead of writing only commands which create or delete keys.
 pub async fn write_aof(command: &Command) -> std::io::Result<()> {
     let log_path = get_aof_log_dir();
 
@@ -53,8 +55,12 @@ pub async fn write_aof(command: &Command) -> std::io::Result<()> {
             format!("{} {}", hash_key.name, fields)
         }
         CommandArgs::HashField(hash_field) => {
-            format!("HGET {} {}", hash_field.key, hash_field.field)
+            format!(
+                "{:?} {} {}",
+                command.command_type, hash_field.key, hash_field.field
+            )
         }
+        CommandArgs::KeyName(key) => key.to_string(),
     };
 
     let formatted = format!("{:?} {}\n", command.command_type, keys_value);

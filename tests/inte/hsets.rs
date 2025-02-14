@@ -34,3 +34,24 @@ fn test_hget() {
 
     stop_server(&mut server);
 }
+
+#[test]
+fn test_hgetall() {
+    let mut server = start_server();
+
+    let response = send_command("HSET myhashhgetall name Smith first_name John age 21");
+    assert!(response.contains("(integer) 3"));
+
+    let response = send_command("HGETALL myhashhgetall");
+    assert!(response.contains("name"));
+    assert!(response.contains("Smith"));
+    assert!(response.contains("first_name"));
+    assert!(response.contains("John"));
+    assert!(response.contains("age"));
+    assert!(response.contains("21"));
+
+    let response = send_command("HGETALL non_existing_hash");
+    assert!(response.contains("(empty array)"));
+
+    stop_server(&mut server);
+}

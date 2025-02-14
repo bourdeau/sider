@@ -6,6 +6,7 @@ pub type Db = Arc<RwLock<IndexMap<String, DbValue>>>;
 
 #[derive(Debug, Clone)]
 pub enum CommandArgs {
+    KeyName(String),
     SingleKey(Key),
     KeyWithValues(KeyList),
     MultipleKeys(Vec<Key>),
@@ -72,6 +73,7 @@ pub enum CommandType {
     RPOP,
     HSET,
     HGET,
+    HGETALL,
 }
 
 #[derive(Debug, Clone, Copy)]

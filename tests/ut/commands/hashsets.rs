@@ -187,4 +187,52 @@ mod tests {
         let result = hget(&db, command).await;
         assert_eq!(result, "(nil)\n");
     }
+
+    #[tokio::test]
+    async fn test_hgetall_existing_hash() {
+        let db = setup_db().await;
+
+        let key = KeyHash {
+            name: "user:1".to_string(),
+            fields: IndexMap::from([
+                ("name".to_string(), "Smith".to_string()),
+                ("first_name".to_string(), "John".to_string()),
+                ("age".to_string(), "21".to_string()),
+            ]),
+        };
+
+        let command = Command {
+            command_type: CommandType::HSET,
+            args: CommandArgs::HashKey(key),
+        };
+
+        let result = hset(&db, command).await;
+        assert_eq!(result, "(integer) 3\n");
+
+        let command = Command {
+            command_type: CommandType::HGETALL,
+            args: CommandArgs::KeyName("user:1".to_string()),
+        };
+
+        let result = hgetall(&db, command).await;
+        assert!(result.contains("name"));
+        assert!(result.contains("Smith"));
+        assert!(result.contains("first_name"));
+        assert!(result.contains("John"));
+        assert!(result.contains("age"));
+        assert!(result.contains("21"));
+    }
+
+    #[tokio::test]
+    async fn test_hgetall_non_existing_hash() {
+        let db = setup_db().await;
+
+        let command = Command {
+            command_type: CommandType::HGETALL,
+            args: CommandArgs::KeyName("non_existing".to_string()),
+        };
+
+        let result = hgetall(&db, command).await;
+        assert_eq!(result, "(empty array)\n");
+    }
 }
