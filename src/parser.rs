@@ -33,6 +33,7 @@ pub async fn parse_command(command: &str, restore: bool) -> Result<Command, Stri
         "LRANGE" => build_lrange_command(&args)?,
         "LPOP" => build_lpop_command(&args)?,
         "RPOP" => build_rpop_command(&args)?,
+        "HSET" => build_hset_command(&args)?,
         _ => return Err(format!("Unknown command: {}", parts[0])),
     };
 

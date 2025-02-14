@@ -1,4 +1,6 @@
-use crate::types::{Command, CommandArgs, CommandType, Key, KeyList};
+use indexmap::IndexMap;
+
+use crate::types::{Command, CommandArgs, CommandType, Key, KeyHash, KeyList};
 
 pub fn build_pong_command() -> Command {
     Command {
@@ -213,6 +215,28 @@ pub fn build_rpop_command(args: &[String]) -> Result<Command, String> {
             name: args[0].to_string(),
             value: args.get(1).cloned(),
             ..Default::default()
+        }),
+    })
+}
+
+pub fn build_hset_command(args: &[String]) -> Result<Command, String> {
+    if args.len() < 3 || args.len() % 2 == 0 {
+        return Err("ERR wrong number of arguments".to_string());
+    }
+
+    let key_name = args[0].clone();
+    let fields = args[1..]
+        .iter()
+        .step_by(2) // Selects every other element starting from the first (field)
+        .zip(args[2..].iter().step_by(2)) // Pairs each field with the next value. zip() is great!
+        .map(|(field, value)| (field.clone(), value.clone())) // Convert to owned Strings
+        .collect::<IndexMap<String, String>>();
+
+    Ok(Command {
+        command_type: CommandType::HSET,
+        args: CommandArgs::HashKey(KeyHash {
+            name: key_name,
+            fields,
         }),
     })
 }

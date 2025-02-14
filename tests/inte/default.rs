@@ -330,3 +330,16 @@ fn test_rpop() {
 
     stop_server(&mut server);
 }
+
+#[test]
+fn test_hset() {
+    let mut server = start_server();
+
+    let response = send_command("HSET myhash name Smith first_name John age 21");
+    assert!(response.contains("(integer) 3"));
+
+    let response = send_command("HSET myhash age 34 city Paris");
+    assert!(response.contains("(integer) 1"));
+
+    stop_server(&mut server);
+}

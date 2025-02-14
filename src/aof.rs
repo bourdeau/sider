@@ -43,6 +43,15 @@ pub async fn write_aof(command: &Command) -> std::io::Result<()> {
         CommandArgs::KeyWithValues(list_key) => {
             format!("{} {}", list_key.name, list_key.values.join(" "))
         }
+        CommandArgs::HashKey(hash_key) => {
+            let fields = hash_key
+                .fields
+                .iter()
+                .map(|(field, value)| format!("{} {}", field, value))
+                .collect::<Vec<_>>()
+                .join(" ");
+            format!("{} {}", hash_key.name, fields)
+        }
     };
 
     let formatted = format!("{:?} {}\n", command.command_type, keys_value);
@@ -81,10 +90,18 @@ async fn dump_db_to_aof(db: &Db) -> Result<(), Error> {
                     output.push_str(&format!("SET {} {}\n", key, val));
                 }
             }
-
             DbValue::ListKey(l) => {
                 let values = l.values.join(" ");
                 output.push_str(&format!("LPUSH {} {}\n", key, values));
+            }
+            DbValue::HashKey(hash_key) => {
+                let fields = hash_key
+                    .fields
+                    .iter()
+                    .map(|(field, value)| format!("{} {}", field, value))
+                    .collect::<Vec<_>>()
+                    .join(" ");
+                output.push_str(&format!("HSET {} {}\n", hash_key.name, fields));
             }
         }
     }

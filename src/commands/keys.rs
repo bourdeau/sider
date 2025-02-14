@@ -1,4 +1,4 @@
-use crate::commands::utils::{format_list_response, ERROR_LIST_KEY};
+use crate::commands::utils::{format_list_response, ERROR_KEY_TYPE};
 use crate::types::{Command, CommandArgs, Db, DbValue, Key};
 use regex::Regex;
 
@@ -17,8 +17,8 @@ pub async fn get_key(db: &Db, command: Command) -> String {
 
     let key = match key {
         Some(DbValue::StringKey(k)) => k,
-        Some(DbValue::ListKey(_)) => return ERROR_LIST_KEY.to_string(),
         None => return nil,
+        Some(_) => return ERROR_KEY_TYPE.to_string(),
     };
 
     if let Some(value) = &key.value {
@@ -111,7 +111,6 @@ pub async fn incrby(db: &Db, command: Command) -> String {
 
     let key = match db_write.get_mut(&key_name) {
         Some(DbValue::StringKey(existing_key)) => existing_key,
-        Some(_) => return "ERR key is not a string\n".to_string(),
         None => {
             db_write.insert(
                 key_name.clone(),
@@ -126,6 +125,7 @@ pub async fn incrby(db: &Db, command: Command) -> String {
                 _ => return "ERR unexpected database error\n".to_string(),
             }
         }
+        Some(_) => return ERROR_KEY_TYPE.to_string(),
     };
 
     let num_str = key.value.as_deref().unwrap_or("0");
@@ -153,7 +153,6 @@ async fn incr_decr(db: &Db, command: Command, inc: bool) -> String {
 
     let key = match db_write.get_mut(&key_name) {
         Some(DbValue::StringKey(key)) => key,
-        Some(DbValue::ListKey(_)) => return "ERR key is a list, not a string\n".to_string(),
         None => {
             let key = Key::new(key_name.clone(), "0".to_string(), None);
             db_write.insert(key_name.clone(), DbValue::StringKey(key));
@@ -165,6 +164,7 @@ async fn incr_decr(db: &Db, command: Command, inc: bool) -> String {
                 _ => return "ERR unexpected database error\n".to_string(),
             }
         }
+        Some(_) => return ERROR_KEY_TYPE.to_string(),
     };
 
     let Ok(num) = key.value.as_deref().unwrap_or("0").parse::<i64>() else {
@@ -236,12 +236,12 @@ pub async fn expire(db: &Db, command: Command) -> String {
     let mut db_write = db.write().await;
 
     match db_write.get_mut(&key.name) {
-        Some(DbValue::ListKey(_)) => "ERR key is a list, not a string\n".to_string(),
         Some(DbValue::StringKey(key)) => {
             key.set_ttl(ttl);
             "(integer) 1\n".to_string()
         }
         None => "(integer) 0\n".to_string(),
+        Some(_) => ERROR_KEY_TYPE.to_string(),
     }
 }
 
@@ -255,8 +255,8 @@ pub async fn ttl(db: &Db, command: Command) -> String {
 
     let key = match db_read.get(&key.name) {
         Some(DbValue::StringKey(key)) => key,
-        Some(DbValue::ListKey(_)) => return "ERR key is a list, not a string\n".to_string(),
         None => return "(integer) -2\n".to_string(),
+        Some(_) => return ERROR_KEY_TYPE.to_string(),
     };
 
     format!("(integer) {}\n", key.get_ttl())

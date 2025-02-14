@@ -3,6 +3,7 @@ use crate::types::CommandType;
 use crate::types::Db;
 
 use crate::commands::db::*;
+use crate::commands::hashsets::*;
 use crate::commands::keys::*;
 use crate::commands::lists::*;
 use crate::commands::misc::*;
@@ -37,5 +38,6 @@ pub async fn process_command(command: String, db: &Db, restore: bool) -> String 
         CommandType::RPUSH => rpush(db, command).await,
         CommandType::LPOP => lpop(db, command).await,
         CommandType::RPOP => rpop(db, command).await,
+        CommandType::HSET => hset(db, command).await,
     }
 }
