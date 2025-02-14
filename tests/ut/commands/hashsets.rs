@@ -112,4 +112,79 @@ mod tests {
 
         assert_eq!(stored_hash.fields.get("name"), Some(&"Smith".to_string()));
     }
+
+    #[tokio::test]
+    async fn test_hget_existing_field() {
+        let db = setup_db().await;
+
+        let key = KeyHash {
+            name: "user:1".to_string(),
+            fields: IndexMap::from([
+                ("name".to_string(), "Smith".to_string()),
+                ("first_name".to_string(), "John".to_string()),
+            ]),
+        };
+
+        let command = Command {
+            command_type: CommandType::HSET,
+            args: CommandArgs::HashKey(key),
+        };
+
+        let _ = hset(&db, command).await;
+
+        let command = Command {
+            command_type: CommandType::HGET,
+            args: CommandArgs::HashField(HashField {
+                key: "user:1".to_string(),
+                field: "name".to_string(),
+            }),
+        };
+
+        let result = hget(&db, command).await;
+        assert_eq!(result, "Smith\n");
+    }
+
+    #[tokio::test]
+    async fn test_hget_nonexistent_field() {
+        let db = setup_db().await;
+
+        let key = KeyHash {
+            name: "user:2".to_string(),
+            fields: IndexMap::from([("name".to_string(), "Doe".to_string())]),
+        };
+
+        let command = Command {
+            command_type: CommandType::HSET,
+            args: CommandArgs::HashKey(key),
+        };
+
+        let _ = hset(&db, command).await;
+
+        let command = Command {
+            command_type: CommandType::HGET,
+            args: CommandArgs::HashField(HashField {
+                key: "user:2".to_string(),
+                field: "age".to_string(),
+            }),
+        };
+
+        let result = hget(&db, command).await;
+        assert_eq!(result, "(nil)\n");
+    }
+
+    #[tokio::test]
+    async fn test_hget_nonexistent_key() {
+        let db = setup_db().await;
+
+        let command = Command {
+            command_type: CommandType::HGET,
+            args: CommandArgs::HashField(HashField {
+                key: "user:3".to_string(),
+                field: "name".to_string(),
+            }),
+        };
+
+        let result = hget(&db, command).await;
+        assert_eq!(result, "(nil)\n");
+    }
 }
