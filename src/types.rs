@@ -10,6 +10,7 @@ pub enum CommandArgs {
     KeyWithValues(KeyList),
     MultipleKeys(Vec<Key>),
     HashKey(KeyHash),
+    HashField(HashField),
 }
 
 #[derive(Debug, Clone)]
@@ -29,6 +30,12 @@ pub enum DbValue {
 pub struct KeyHash {
     pub name: String,
     pub fields: IndexMap<String, String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct HashField {
+    pub key: String,
+    pub field: String,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -64,6 +71,7 @@ pub enum CommandType {
     LPOP,
     RPOP,
     HSET,
+    HGET,
 }
 
 #[derive(Debug, Clone, Copy)]
