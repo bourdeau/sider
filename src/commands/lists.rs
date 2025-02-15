@@ -1,5 +1,5 @@
 use crate::commands::utils::{format_int, format_list_response, format_single_response};
-use crate::errors::{SiderError, SiderErrorKind};
+use crate::errors::SiderError;
 use crate::types::{Command, CommandArgs, Db, DbValue, KeyList, ListPushType, PopType};
 
 pub async fn push_to_list(
@@ -9,7 +9,7 @@ pub async fn push_to_list(
 ) -> Result<String, SiderError> {
     let key_list = match command.args {
         CommandArgs::KeyWithValues(key) => key,
-        _ => return Err(SiderError::new(SiderErrorKind::InvalidCommand)),
+        _ => return Err(SiderError::InvalidCommand),
     };
 
     let key_name = key_list.name.clone();
@@ -45,7 +45,7 @@ pub async fn push_to_list(
             let nb = new_values.len() as i64;
             Ok(format_int(nb))
         }
-        Some(_) => Err(SiderError::new(SiderErrorKind::WrongType)),
+        Some(_) => Err(SiderError::WrongType),
     }
 }
 
@@ -60,36 +60,26 @@ pub async fn rpush(db: &Db, command: Command) -> Result<String, SiderError> {
 pub async fn lrange(db: &Db, command: Command) -> Result<String, SiderError> {
     let key_list = match command.args {
         CommandArgs::KeyWithValues(key) => key,
-        _ => return Err(SiderError::new(SiderErrorKind::InvalidCommand)),
+        _ => return Err(SiderError::InvalidCommand),
     };
 
     let key_name = key_list.name.clone();
 
     let min: isize = match key_list.values[0].parse::<isize>() {
         Ok(val) => val,
-        Err(_) => {
-            return Err(SiderError::with_message(
-                SiderErrorKind::Custom,
-                "(error) value is not an integer or out of range",
-            ))
-        }
+        Err(_) => return Err(SiderError::NotIntOrOutOfRange),
     };
 
     let max: isize = match key_list.values[1].parse::<isize>() {
         Ok(val) => val,
-        Err(_) => {
-            return Err(SiderError::with_message(
-                SiderErrorKind::Custom,
-                "(error) value is not an integer or out of range",
-            ))
-        }
+        Err(_) => return Err(SiderError::NotIntOrOutOfRange),
     };
 
     let db_read = db.read().await;
 
     let key = match db_read.get(&key_name) {
         Some(DbValue::ListKey(key)) => key,
-        Some(DbValue::StringKey(_)) => return Err(SiderError::new(SiderErrorKind::WrongType)),
+        Some(DbValue::StringKey(_)) => return Err(SiderError::WrongType),
         _ => return Ok("(empty array)\n".to_string()),
     };
 
@@ -131,7 +121,7 @@ pub async fn rpop(db: &Db, command: Command) -> Result<String, SiderError> {
 async fn pop_list(db: &Db, command: Command, pop_type: PopType) -> Result<String, SiderError> {
     let key = match &command.args {
         CommandArgs::SingleKey(key) => key,
-        _ => return Err(SiderError::new(SiderErrorKind::InvalidCommand)),
+        _ => return Err(SiderError::InvalidCommand),
     };
 
     let key_name = key.name.clone();
@@ -140,7 +130,7 @@ async fn pop_list(db: &Db, command: Command, pop_type: PopType) -> Result<String
 
     let key_db = match db_write.get_mut(&key_name) {
         Some(DbValue::ListKey(key)) => key,
-        Some(DbValue::StringKey(_)) => return Err(SiderError::new(SiderErrorKind::WrongType)),
+        Some(DbValue::StringKey(_)) => return Err(SiderError::WrongType),
         _ => return Ok("(empty array)\n".to_string()),
     };
 

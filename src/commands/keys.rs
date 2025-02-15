@@ -1,12 +1,12 @@
 use crate::commands::utils::{format_int, format_list_response, format_single_response};
-use crate::errors::{SiderError, SiderErrorKind};
+use crate::errors::SiderError;
 use crate::types::{Command, CommandArgs, Db, DbValue, Key};
 use regex::Regex;
 
 pub async fn get_key(db: &Db, command: Command) -> Result<String, SiderError> {
     let key_name = match &command.args {
         CommandArgs::SingleKey(key) => &key.name,
-        _ => return Err(SiderError::new(SiderErrorKind::InvalidCommand)),
+        _ => return Err(SiderError::InvalidCommand),
     };
 
     let key = {
@@ -17,7 +17,7 @@ pub async fn get_key(db: &Db, command: Command) -> Result<String, SiderError> {
     let key = match key {
         Some(DbValue::StringKey(k)) => k,
         None => return Ok("(nil)\n".to_string()),
-        Some(_) => return Err(SiderError::new(SiderErrorKind::WrongType)),
+        Some(_) => return Err(SiderError::WrongType),
     };
 
     if let Some(value) = &key.value {
@@ -34,7 +34,7 @@ pub async fn get_key(db: &Db, command: Command) -> Result<String, SiderError> {
 pub async fn set_key(db: &Db, command: Command) -> Result<String, SiderError> {
     let key = match command.args {
         CommandArgs::SingleKey(key) => key,
-        _ => return Err(SiderError::new(SiderErrorKind::InvalidCommand)),
+        _ => return Err(SiderError::InvalidCommand),
     };
 
     db.write()
@@ -48,7 +48,7 @@ pub async fn delete_key(db: &Db, command: Command) -> Result<String, SiderError>
     let keys = match &command.args {
         CommandArgs::SingleKey(key) => vec![key.name.clone()],
         CommandArgs::MultipleKeys(keys) => keys.iter().map(|k| k.name.clone()).collect(),
-        _ => return Err(SiderError::new(SiderErrorKind::InvalidCommand)),
+        _ => return Err(SiderError::InvalidCommand),
     };
 
     let mut db_write = db.write().await;
@@ -90,20 +90,20 @@ pub async fn decr(db: &Db, command: Command) -> Result<String, SiderError> {
 pub async fn incrby(db: &Db, command: Command) -> Result<String, SiderError> {
     let key_name = match &command.args {
         CommandArgs::SingleKey(key) => key.name.clone(),
-        _ => return Err(SiderError::new(SiderErrorKind::InvalidCommand)),
+        _ => return Err(SiderError::InvalidCommand),
     };
 
     let by_str = match &command.args {
         CommandArgs::SingleKey(key) => match key.value.as_deref() {
             Some(by) => by,
-            None => return Err(SiderError::new(SiderErrorKind::NotInt)),
+            None => return Err(SiderError::NotInt),
         },
-        _ => return Err(SiderError::new(SiderErrorKind::InvalidCommand)),
+        _ => return Err(SiderError::InvalidCommand),
     };
 
     let by = match by_str.parse::<i64>() {
         Ok(num) => num,
-        Err(_) => return Err(SiderError::new(SiderErrorKind::NotInt)),
+        Err(_) => return Err(SiderError::NotInt),
     };
 
     let mut db_write = db.write().await;
@@ -121,17 +121,17 @@ pub async fn incrby(db: &Db, command: Command) -> Result<String, SiderError> {
             );
             match db_write.get_mut(&key_name) {
                 Some(DbValue::StringKey(new_key)) => new_key,
-                _ => return Err(SiderError::new(SiderErrorKind::DatabaseError)),
+                _ => return Err(SiderError::DatabaseError),
             }
         }
-        Some(_) => return Err(SiderError::new(SiderErrorKind::WrongType)),
+        Some(_) => return Err(SiderError::WrongType),
     };
 
     let num_str = key.value.as_deref().unwrap_or("0");
 
     let num = match num_str.parse::<i64>() {
         Ok(n) => n,
-        Err(_) => return Err(SiderError::new(SiderErrorKind::NotInt)),
+        Err(_) => return Err(SiderError::NotInt),
     };
 
     let new_value = num + by;
@@ -143,7 +143,7 @@ pub async fn incrby(db: &Db, command: Command) -> Result<String, SiderError> {
 async fn incr_decr(db: &Db, command: Command, inc: bool) -> Result<String, SiderError> {
     let key = match command.args {
         CommandArgs::SingleKey(key) => key,
-        _ => return Err(SiderError::new(SiderErrorKind::InvalidCommand)),
+        _ => return Err(SiderError::InvalidCommand),
     };
 
     let key_name = key.name.clone();
@@ -157,17 +157,15 @@ async fn incr_decr(db: &Db, command: Command, inc: bool) -> Result<String, Sider
             db_write.insert(key_name.clone(), DbValue::StringKey(key));
             match db_write.get_mut(&key_name) {
                 Some(DbValue::StringKey(key)) => key,
-                Some(DbValue::ListKey(_)) => {
-                    return Err(SiderError::new(SiderErrorKind::WrongType))
-                }
-                _ => return Err(SiderError::new(SiderErrorKind::DatabaseError)),
+                Some(DbValue::ListKey(_)) => return Err(SiderError::WrongType),
+                _ => return Err(SiderError::DatabaseError),
             }
         }
-        Some(_) => return Err(SiderError::new(SiderErrorKind::WrongType)),
+        Some(_) => return Err(SiderError::WrongType),
     };
 
     let Ok(num) = key.value.as_deref().unwrap_or("0").parse::<i64>() else {
-        return Err(SiderError::new(SiderErrorKind::NotInt));
+        return Err(SiderError::NotInt);
     };
 
     let new_value = if inc { num + 1 } else { num - 1 };
@@ -181,14 +179,14 @@ async fn incr_decr(db: &Db, command: Command, inc: bool) -> Result<String, Sider
 pub async fn get_keys(db: &Db, command: Command) -> Result<String, SiderError> {
     let pattern = match &command.args {
         CommandArgs::SingleKey(key) => &key.name,
-        _ => return Err(SiderError::new(SiderErrorKind::InvalidCommand)),
+        _ => return Err(SiderError::InvalidCommand),
     };
 
     // Convert Redis glob pattern to regex
     let regex_pattern = convert_redis_pattern_to_regex(pattern);
     let re = match Regex::new(&regex_pattern) {
         Ok(re) => re,
-        Err(_) => return Err(SiderError::new(SiderErrorKind::RegexError)),
+        Err(_) => return Err(SiderError::RegexError),
     };
 
     let mut results = vec![];
@@ -212,7 +210,7 @@ pub async fn exists(db: &Db, command: Command) -> Result<String, SiderError> {
     let keys = match &command.args {
         CommandArgs::SingleKey(key) => vec![key.name.clone()],
         CommandArgs::MultipleKeys(keys) => keys.iter().map(|k| k.name.clone()).collect(),
-        _ => return Err(SiderError::new(SiderErrorKind::InvalidCommand)),
+        _ => return Err(SiderError::InvalidCommand),
     };
 
     let db_read = db.read().await;
@@ -224,12 +222,12 @@ pub async fn exists(db: &Db, command: Command) -> Result<String, SiderError> {
 pub async fn expire(db: &Db, command: Command) -> Result<String, SiderError> {
     let key = match command.args {
         CommandArgs::SingleKey(key) => key,
-        _ => return Err(SiderError::new(SiderErrorKind::InvalidCommand)),
+        _ => return Err(SiderError::InvalidCommand),
     };
 
     let ttl = match key.expires_at {
         Some(ttl) => ttl,
-        None => return Err(SiderError::new(SiderErrorKind::TTL)),
+        None => return Err(SiderError::TTL),
     };
 
     let mut db_write = db.write().await;
@@ -240,14 +238,14 @@ pub async fn expire(db: &Db, command: Command) -> Result<String, SiderError> {
             Ok(format_int(1))
         }
         None => Ok(format_int(0)),
-        Some(_) => Err(SiderError::new(SiderErrorKind::WrongType)),
+        Some(_) => Err(SiderError::WrongType),
     }
 }
 
 pub async fn ttl(db: &Db, command: Command) -> Result<String, SiderError> {
     let key = match command.args {
         CommandArgs::SingleKey(key) => key,
-        _ => return Err(SiderError::new(SiderErrorKind::InvalidCommand)),
+        _ => return Err(SiderError::InvalidCommand),
     };
 
     let db_read = db.read().await;
@@ -255,7 +253,7 @@ pub async fn ttl(db: &Db, command: Command) -> Result<String, SiderError> {
     let key = match db_read.get(&key.name) {
         Some(DbValue::StringKey(key)) => key,
         None => return Ok(format_int(-2)),
-        Some(_) => return Err(SiderError::new(SiderErrorKind::WrongType)),
+        Some(_) => return Err(SiderError::WrongType),
     };
 
     Ok(format_int(key.get_ttl()))
