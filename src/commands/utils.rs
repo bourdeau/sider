@@ -1,5 +1,10 @@
-pub const ERROR_KEY_TYPE: &str =
-    "(error) WRONGTYPE Operation against a key holding the wrong kind of value\n";
+pub fn format_single_response(data: &str) -> String {
+    format!("\"{}\"\n", data)
+}
+
+pub fn format_int(data: i64) -> String {
+    format!("(integer) {}\n", data)
+}
 
 pub fn format_list_response(data: Vec<String>) -> String {
     data.iter()
