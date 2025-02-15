@@ -69,7 +69,7 @@ pub async fn delete_key(db: &Db, command: Command) -> Result<String, SiderError>
 // a non-numeric value or a string that cannot be interpreted
 // as an integer.
 pub async fn incr(db: &Db, command: Command) -> Result<String, SiderError> {
-    Ok(incr_decr(db, command, true).await?)
+    incr_decr(db, command, true).await
 }
 
 // Decrements the number stored at key by one.
@@ -79,7 +79,7 @@ pub async fn incr(db: &Db, command: Command) -> Result<String, SiderError> {
 // represented as integer.
 // This operation is limited to 64 bit signed integers.
 pub async fn decr(db: &Db, command: Command) -> Result<String, SiderError> {
-    Ok(incr_decr(db, command, false).await?)
+    incr_decr(db, command, false).await
 }
 
 // Increases the number stored at the given key by the specified

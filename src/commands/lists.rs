@@ -121,11 +121,11 @@ pub async fn lrange(db: &Db, command: Command) -> Result<String, SiderError> {
 }
 
 pub async fn lpop(db: &Db, command: Command) -> Result<String, SiderError> {
-    Ok(pop_list(db, command, PopType::LPOP).await?)
+    pop_list(db, command, PopType::LPOP).await
 }
 
 pub async fn rpop(db: &Db, command: Command) -> Result<String, SiderError> {
-    Ok(pop_list(db, command, PopType::RPOP).await?)
+    pop_list(db, command, PopType::RPOP).await
 }
 
 async fn pop_list(db: &Db, command: Command, pop_type: PopType) -> Result<String, SiderError> {
