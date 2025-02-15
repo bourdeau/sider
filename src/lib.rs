@@ -13,5 +13,6 @@ pub mod errors;
 pub mod keys;
 pub mod parser;
 pub mod process;
+pub mod response;
 pub mod server;
 pub mod types;

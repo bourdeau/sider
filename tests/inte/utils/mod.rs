@@ -18,7 +18,7 @@ pub fn start_server() -> Child {
             send_command("FLUSHDB");
             return child;
         }
-        sleep(Duration::from_millis(200)); // Wait before retrying
+        sleep(Duration::from_secs(1)); // Wait before retrying
     }
 
     panic!("Server did not start in time");
