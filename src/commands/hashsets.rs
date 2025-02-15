@@ -1,12 +1,12 @@
-use crate::commands::utils::{format_int, format_list_response, format_single_response};
 use crate::errors::SiderError;
+use crate::response::SiderResponse;
 use crate::types::Command;
 use crate::types::CommandArgs;
 use crate::types::Db;
 use crate::types::DbValue;
 use crate::types::KeyHash;
 
-pub async fn hset(db: &Db, command: Command) -> Result<String, SiderError> {
+pub async fn hset(db: &Db, command: Command) -> Result<SiderResponse, SiderError> {
     let key = match &command.args {
         CommandArgs::HashKey(key) => key,
         _ => return Err(SiderError::InvalidCommand),
@@ -43,10 +43,10 @@ pub async fn hset(db: &Db, command: Command) -> Result<String, SiderError> {
         Some(_) => return Err(SiderError::WrongType),
     };
 
-    Ok(format_int(nb as i64))
+    Ok(SiderResponse::Int(nb as i64))
 }
 
-pub async fn hget(db: &Db, command: Command) -> Result<String, SiderError> {
+pub async fn hget(db: &Db, command: Command) -> Result<SiderResponse, SiderError> {
     let (hash_name, field_name) = match &command.args {
         CommandArgs::HashField(hash) => (&hash.key, &hash.field),
         _ => return Err(SiderError::InvalidCommand),
@@ -56,15 +56,15 @@ pub async fn hget(db: &Db, command: Command) -> Result<String, SiderError> {
 
     match db_read.get(hash_name) {
         Some(DbValue::HashKey(hash)) => match hash.fields.get(field_name) {
-            Some(value) => Ok(format_single_response(value)),
-            None => Ok("(nil)\n".to_string()),
+            Some(value) => Ok(SiderResponse::SimpleString(value.to_string())),
+            None => Ok(SiderResponse::Nil),
         },
-        None => Ok("(nil)\n".to_string()),
+        None => Ok(SiderResponse::Nil),
         Some(_) => Err(SiderError::WrongType),
     }
 }
 
-pub async fn hgetall(db: &Db, command: Command) -> Result<String, SiderError> {
+pub async fn hgetall(db: &Db, command: Command) -> Result<SiderResponse, SiderError> {
     let key_name = match &command.args {
         CommandArgs::KeyName(name) => name,
         _ => return Err(SiderError::InvalidCommand),
@@ -79,13 +79,13 @@ pub async fn hgetall(db: &Db, command: Command) -> Result<String, SiderError> {
             .flat_map(|(k, v)| vec![k.clone(), v.clone()])
             .collect::<Vec<String>>(),
         Some(_) => return Err(SiderError::WrongType),
-        None => return Ok("(empty array)\n".to_string()),
+        None => return Ok(SiderResponse::EmptyArray),
     };
 
-    Ok(format_list_response(results))
+    Ok(SiderResponse::List(results))
 }
 
-pub async fn hdel(db: &Db, command: Command) -> Result<String, SiderError> {
+pub async fn hdel(db: &Db, command: Command) -> Result<SiderResponse, SiderError> {
     let key = match &command.args {
         CommandArgs::KeyWithValues(key) => key,
         _ => return Err(SiderError::InvalidCommand),
@@ -108,9 +108,9 @@ pub async fn hdel(db: &Db, command: Command) -> Result<String, SiderError> {
             if hash.fields.is_empty() {
                 db_write.swap_remove(&key_name);
             }
-            Ok(format_int(deleted_count))
+            Ok(SiderResponse::Int(deleted_count))
         }
         Some(_) => Err(SiderError::WrongType),
-        None => Ok(format_int(0)),
+        None => Ok(SiderResponse::Int(0)),
     }
 }

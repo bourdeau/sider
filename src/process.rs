@@ -44,5 +44,8 @@ pub async fn process_command(command: String, db: &Db, restore: bool) -> String 
         CommandType::HDEL => hdel(db, command).await,
     };
 
-    response.unwrap_or_else(|e| e.to_string())
+    match response {
+        Ok(resp) => resp.to_string(),
+        Err(err) => err.to_string(),
+    }
 }

@@ -1,5 +1,6 @@
 use crate::errors::SiderError;
+use crate::response::SiderResponse;
 
-pub async fn pong() -> Result<String, SiderError> {
-    Ok("PONG\n".to_string())
+pub async fn pong() -> Result<SiderResponse, SiderError> {
+    Ok(SiderResponse::SimpleString("PONG".to_string()))
 }

@@ -1,12 +1,12 @@
-use crate::commands::utils::{format_int, format_list_response, format_single_response};
 use crate::errors::SiderError;
+use crate::response::SiderResponse;
 use crate::types::{Command, CommandArgs, Db, DbValue, KeyList, ListPushType, PopType};
 
 pub async fn push_to_list(
     db: &Db,
     command: Command,
     push_type: ListPushType,
-) -> Result<String, SiderError> {
+) -> Result<SiderResponse, SiderError> {
     let key_list = match command.args {
         CommandArgs::KeyWithValues(key) => key,
         _ => return Err(SiderError::InvalidCommand),
@@ -29,7 +29,7 @@ pub async fn push_to_list(
                 }
             }
             let nb = existing_list.values.len() as i64;
-            Ok(format_int(nb))
+            Ok(SiderResponse::Int(nb))
         }
         None => {
             if let ListPushType::LPUSH = push_type {
@@ -43,21 +43,21 @@ pub async fn push_to_list(
                 }),
             );
             let nb = new_values.len() as i64;
-            Ok(format_int(nb))
+            Ok(SiderResponse::Int(nb))
         }
         Some(_) => Err(SiderError::WrongType),
     }
 }
 
-pub async fn lpush(db: &Db, command: Command) -> Result<String, SiderError> {
+pub async fn lpush(db: &Db, command: Command) -> Result<SiderResponse, SiderError> {
     push_to_list(db, command, ListPushType::LPUSH).await
 }
 
-pub async fn rpush(db: &Db, command: Command) -> Result<String, SiderError> {
+pub async fn rpush(db: &Db, command: Command) -> Result<SiderResponse, SiderError> {
     push_to_list(db, command, ListPushType::RPUSH).await
 }
 
-pub async fn lrange(db: &Db, command: Command) -> Result<String, SiderError> {
+pub async fn lrange(db: &Db, command: Command) -> Result<SiderResponse, SiderError> {
     let key_list = match command.args {
         CommandArgs::KeyWithValues(key) => key,
         _ => return Err(SiderError::InvalidCommand),
@@ -80,7 +80,7 @@ pub async fn lrange(db: &Db, command: Command) -> Result<String, SiderError> {
     let key = match db_read.get(&key_name) {
         Some(DbValue::ListKey(key)) => key,
         Some(DbValue::StringKey(_)) => return Err(SiderError::WrongType),
-        _ => return Ok("(empty array)\n".to_string()),
+        _ => return Ok(SiderResponse::EmptyArray),
     };
 
     let len = key.values.len();
@@ -98,27 +98,31 @@ pub async fn lrange(db: &Db, command: Command) -> Result<String, SiderError> {
     };
 
     if min >= max || min >= len {
-        return Ok("(empty array)\n".to_string());
+        return Ok(SiderResponse::EmptyArray);
     }
 
     let results: &[String] = &key.values[min..max];
 
     if results.is_empty() {
-        return Ok("(empty array)\n".to_string());
+        return Ok(SiderResponse::EmptyArray);
     }
 
-    Ok(format_list_response(results.to_vec()))
+    Ok(SiderResponse::List(results.to_vec()))
 }
 
-pub async fn lpop(db: &Db, command: Command) -> Result<String, SiderError> {
+pub async fn lpop(db: &Db, command: Command) -> Result<SiderResponse, SiderError> {
     pop_list(db, command, PopType::LPOP).await
 }
 
-pub async fn rpop(db: &Db, command: Command) -> Result<String, SiderError> {
+pub async fn rpop(db: &Db, command: Command) -> Result<SiderResponse, SiderError> {
     pop_list(db, command, PopType::RPOP).await
 }
 
-async fn pop_list(db: &Db, command: Command, pop_type: PopType) -> Result<String, SiderError> {
+async fn pop_list(
+    db: &Db,
+    command: Command,
+    pop_type: PopType,
+) -> Result<SiderResponse, SiderError> {
     let key = match &command.args {
         CommandArgs::SingleKey(key) => key,
         _ => return Err(SiderError::InvalidCommand),
@@ -131,7 +135,7 @@ async fn pop_list(db: &Db, command: Command, pop_type: PopType) -> Result<String
     let key_db = match db_write.get_mut(&key_name) {
         Some(DbValue::ListKey(key)) => key,
         Some(DbValue::StringKey(_)) => return Err(SiderError::WrongType),
-        _ => return Ok("(empty array)\n".to_string()),
+        _ => return Ok(SiderResponse::EmptyArray),
     };
 
     let nb = key
@@ -154,7 +158,7 @@ async fn pop_list(db: &Db, command: Command, pop_type: PopType) -> Result<String
         .collect();
 
     if removed.is_empty() {
-        return Ok("(nil)\n".to_string());
+        return Ok(SiderResponse::Nil);
     }
 
     if let PopType::RPOP = pop_type {
@@ -163,8 +167,8 @@ async fn pop_list(db: &Db, command: Command, pop_type: PopType) -> Result<String
 
     // If LPOP is passed without arguments, return the first element
     if nb == 1 {
-        return Ok(format_single_response(removed[0].as_str()));
+        return Ok(SiderResponse::SimpleString(removed[0].clone()));
     }
 
-    Ok(format_list_response(removed))
+    Ok(SiderResponse::List(removed))
 }

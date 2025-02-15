@@ -23,7 +23,7 @@ mod tests {
             args: CommandArgs::SingleKey(key),
         };
 
-        let result = set_key(&db, command).await.unwrap();
+        let result = set_key(&db, command).await.unwrap().to_string();
         assert_eq!(result, "\"Ok\"\n");
 
         let db_read = db.read().await;
@@ -56,7 +56,7 @@ mod tests {
             }),
         };
 
-        let result = delete_key(&db, command).await.unwrap();
+        let result = delete_key(&db, command).await.unwrap().to_string();
         assert_eq!(result, "(integer) 1\n");
 
         let db_read = db.read().await;
@@ -75,7 +75,7 @@ mod tests {
             }),
         };
 
-        let result = incr(&db, command).await.unwrap();
+        let result = incr(&db, command).await.unwrap().to_string();
         assert_eq!(result, "(integer) 1\n");
     }
 
@@ -105,7 +105,7 @@ mod tests {
             }),
         };
 
-        let result = incr(&db, command).await.unwrap();
+        let result = incr(&db, command).await.unwrap().to_string();
         assert_eq!(result, "(integer) 6\n");
     }
 
@@ -121,7 +121,7 @@ mod tests {
             }),
         };
 
-        let result = decr(&db, command).await.unwrap();
+        let result = decr(&db, command).await.unwrap().to_string();
         assert_eq!(result, "(integer) -1\n");
     }
 
@@ -151,7 +151,7 @@ mod tests {
             }),
         };
 
-        let result = incrby(&db, command).await.unwrap();
+        let result = incrby(&db, command).await.unwrap().to_string();
         assert_eq!(result, "(integer) 15\n");
     }
 
@@ -188,7 +188,7 @@ mod tests {
             }),
         };
 
-        let result = get_keys(&db, command).await.unwrap();
+        let result = get_keys(&db, command).await.unwrap().to_string();
         assert_eq!(result, "1) \"foo\"\n2) \"foobar\"\n");
     }
 
@@ -224,7 +224,7 @@ mod tests {
             ]),
         };
 
-        let result = exists(&db, command).await.unwrap();
+        let result = exists(&db, command).await.unwrap().to_string();
         assert_eq!(result, "(integer) 1\n");
     }
 
@@ -254,7 +254,7 @@ mod tests {
             }),
         };
 
-        let result = expire(&db, command).await.unwrap();
+        let result = expire(&db, command).await.unwrap().to_string();
         assert_eq!(result, "(integer) 1\n");
     }
 
@@ -284,7 +284,7 @@ mod tests {
             }),
         };
 
-        let result = ttl(&db, command).await.unwrap();
+        let result = ttl(&db, command).await.unwrap().to_string();
         assert!(result.starts_with("(integer) "));
     }
 
