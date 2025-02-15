@@ -9,6 +9,7 @@ pub mod aof;
 pub mod commands;
 pub mod config;
 pub mod database;
+pub mod errors;
 pub mod keys;
 pub mod parser;
 pub mod process;

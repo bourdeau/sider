@@ -20,7 +20,7 @@ pub async fn process_command(command: String, db: &Db, restore: bool) -> String 
         Err(e) => return format!("ERROR: {}\n", e),
     };
 
-    match command.command_type {
+    let response = match command.command_type {
         CommandType::PONG => pong().await,
         CommandType::GET => get_key(db, command).await,
         CommandType::SET => set_key(db, command).await,
@@ -42,5 +42,7 @@ pub async fn process_command(command: String, db: &Db, restore: bool) -> String 
         CommandType::HGET => hget(db, command).await,
         CommandType::HGETALL => hgetall(db, command).await,
         CommandType::HDEL => hdel(db, command).await,
-    }
+    };
+
+    response.unwrap_or_else(|e| e.to_string())
 }

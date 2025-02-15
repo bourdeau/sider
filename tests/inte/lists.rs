@@ -87,7 +87,7 @@ fn test_lpop() {
     assert!(response.contains("(integer) 5"));
 
     let response = send_command("LPOP lpoplist");
-    assert!(response.contains("1) \"E\""));
+    assert!(response.contains("\"E\""));
 
     let response = send_command("LPOP lpoplist 2");
     assert!(response.contains("1) \"D\""));
@@ -111,7 +111,7 @@ fn test_rpop() {
     assert!(response.contains("(integer) 3"));
 
     let response = send_command("RPOP rpoplist");
-    assert!(response.contains("1) \"C\""));
+    assert!(response.contains("\"C\""));
 
     let response = send_command("RPOP rpoplist 2");
     assert!(response.contains("1) \"B\""));

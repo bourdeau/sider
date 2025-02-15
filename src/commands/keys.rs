@@ -1,11 +1,12 @@
-use crate::commands::utils::{format_list_response, ERROR_KEY_TYPE};
+use crate::commands::utils::{format_int, format_list_response, format_single_response};
+use crate::errors::{SiderError, SiderErrorKind};
 use crate::types::{Command, CommandArgs, Db, DbValue, Key};
 use regex::Regex;
 
-pub async fn get_key(db: &Db, command: Command) -> String {
+pub async fn get_key(db: &Db, command: Command) -> Result<String, SiderError> {
     let key_name = match &command.args {
         CommandArgs::SingleKey(key) => &key.name,
-        _ => return "ERR invalid command\n".to_string(),
+        _ => return Err(SiderError::new(SiderErrorKind::InvalidCommand)),
     };
 
     let key = {
@@ -13,43 +14,41 @@ pub async fn get_key(db: &Db, command: Command) -> String {
         db_read.get(key_name).cloned() // Clone key to release lock
     };
 
-    let nil = "(nil)\n".to_string();
-
     let key = match key {
         Some(DbValue::StringKey(k)) => k,
-        None => return nil,
-        Some(_) => return ERROR_KEY_TYPE.to_string(),
+        None => return Ok("(nil)\n".to_string()),
+        Some(_) => return Err(SiderError::new(SiderErrorKind::WrongType)),
     };
 
     if let Some(value) = &key.value {
         let deleted = delete_expired_key(db, key.clone()).await; // No read lock at this point
 
         if !deleted {
-            return format!("{}\n", value);
+            return Ok(format_single_response(value));
         }
     }
 
-    nil
+    Ok("(nil)\n".to_string())
 }
 
-pub async fn set_key(db: &Db, command: Command) -> String {
+pub async fn set_key(db: &Db, command: Command) -> Result<String, SiderError> {
     let key = match command.args {
         CommandArgs::SingleKey(key) => key,
-        _ => return "ERR invalid command\n".to_string(),
+        _ => return Err(SiderError::new(SiderErrorKind::InvalidCommand)),
     };
 
     db.write()
         .await
         .insert(key.name.clone(), DbValue::StringKey(key));
 
-    "OK\n".to_string()
+    Ok("\"Ok\"\n".to_string())
 }
 
-pub async fn delete_key(db: &Db, command: Command) -> String {
+pub async fn delete_key(db: &Db, command: Command) -> Result<String, SiderError> {
     let keys = match &command.args {
         CommandArgs::SingleKey(key) => vec![key.name.clone()],
         CommandArgs::MultipleKeys(keys) => keys.iter().map(|k| k.name.clone()).collect(),
-        _ => return "ERR invalid command\n".to_string(),
+        _ => return Err(SiderError::new(SiderErrorKind::InvalidCommand)),
     };
 
     let mut db_write = db.write().await;
@@ -61,7 +60,7 @@ pub async fn delete_key(db: &Db, command: Command) -> String {
         }
     }
 
-    format!("(integer) {}\n", deleted_count)
+    Ok(format_int(deleted_count))
 }
 
 // Increases the numeric value stored at the key by one.
@@ -69,7 +68,7 @@ pub async fn delete_key(db: &Db, command: Command) -> String {
 // applying the operation. Returns an error if the key holds
 // a non-numeric value or a string that cannot be interpreted
 // as an integer.
-pub async fn incr(db: &Db, command: Command) -> String {
+pub async fn incr(db: &Db, command: Command) -> Result<String, SiderError> {
     incr_decr(db, command, true).await
 }
 
@@ -79,7 +78,7 @@ pub async fn incr(db: &Db, command: Command) -> String {
 // of the wrong type or contains a string that can not be
 // represented as integer.
 // This operation is limited to 64 bit signed integers.
-pub async fn decr(db: &Db, command: Command) -> String {
+pub async fn decr(db: &Db, command: Command) -> Result<String, SiderError> {
     incr_decr(db, command, false).await
 }
 
@@ -88,23 +87,23 @@ pub async fn decr(db: &Db, command: Command) -> String {
 // to 0 before applying the operation. Returns an error
 // if the key holds a non-numeric value or a string that cannot
 // be parsed as a 64-bit signed integer.
-pub async fn incrby(db: &Db, command: Command) -> String {
+pub async fn incrby(db: &Db, command: Command) -> Result<String, SiderError> {
     let key_name = match &command.args {
         CommandArgs::SingleKey(key) => key.name.clone(),
-        _ => return "ERR invalid command\n".to_string(),
+        _ => return Err(SiderError::new(SiderErrorKind::InvalidCommand)),
     };
 
     let by_str = match &command.args {
         CommandArgs::SingleKey(key) => match key.value.as_deref() {
             Some(by) => by,
-            None => return "ERR value is not an integer\n".to_string(),
+            None => return Err(SiderError::new(SiderErrorKind::NotInt)),
         },
-        _ => return "ERR invalid command\n".to_string(),
+        _ => return Err(SiderError::new(SiderErrorKind::InvalidCommand)),
     };
 
     let by = match by_str.parse::<i64>() {
         Ok(num) => num,
-        Err(_) => return "ERR value is not an integer\n".to_string(),
+        Err(_) => return Err(SiderError::new(SiderErrorKind::NotInt)),
     };
 
     let mut db_write = db.write().await;
@@ -122,29 +121,29 @@ pub async fn incrby(db: &Db, command: Command) -> String {
             );
             match db_write.get_mut(&key_name) {
                 Some(DbValue::StringKey(new_key)) => new_key,
-                _ => return "ERR unexpected database error\n".to_string(),
+                _ => return Err(SiderError::new(SiderErrorKind::DatabaseError)),
             }
         }
-        Some(_) => return ERROR_KEY_TYPE.to_string(),
+        Some(_) => return Err(SiderError::new(SiderErrorKind::WrongType)),
     };
 
     let num_str = key.value.as_deref().unwrap_or("0");
 
     let num = match num_str.parse::<i64>() {
         Ok(n) => n,
-        Err(_) => return "ERR value is not an integer\n".to_string(),
+        Err(_) => return Err(SiderError::new(SiderErrorKind::NotInt)),
     };
 
     let new_value = num + by;
     key.value = Some(new_value.to_string());
 
-    format!("(integer) {}\n", new_value)
+    Ok(format_int(new_value))
 }
 
-async fn incr_decr(db: &Db, command: Command, inc: bool) -> String {
+async fn incr_decr(db: &Db, command: Command, inc: bool) -> Result<String, SiderError> {
     let key = match command.args {
         CommandArgs::SingleKey(key) => key,
-        _ => return "ERR invalid command\n".to_string(),
+        _ => return Err(SiderError::new(SiderErrorKind::InvalidCommand)),
     };
 
     let key_name = key.name.clone();
@@ -159,37 +158,37 @@ async fn incr_decr(db: &Db, command: Command, inc: bool) -> String {
             match db_write.get_mut(&key_name) {
                 Some(DbValue::StringKey(key)) => key,
                 Some(DbValue::ListKey(_)) => {
-                    return "ERR key is a list, not a string\n".to_string()
+                    return Err(SiderError::new(SiderErrorKind::WrongType))
                 }
-                _ => return "ERR unexpected database error\n".to_string(),
+                _ => return Err(SiderError::new(SiderErrorKind::DatabaseError)),
             }
         }
-        Some(_) => return ERROR_KEY_TYPE.to_string(),
+        Some(_) => return Err(SiderError::new(SiderErrorKind::WrongType)),
     };
 
     let Ok(num) = key.value.as_deref().unwrap_or("0").parse::<i64>() else {
-        return "ERR value is not an integer\n".to_string();
+        return Err(SiderError::new(SiderErrorKind::NotInt));
     };
 
     let new_value = if inc { num + 1 } else { num - 1 };
 
     key.value = Some(new_value.to_string());
 
-    format!("(integer) {}\n", new_value)
+    Ok(format_int(new_value))
 }
 
 /// Returns keys matching the Redis-style pattern
-pub async fn get_keys(db: &Db, command: Command) -> String {
+pub async fn get_keys(db: &Db, command: Command) -> Result<String, SiderError> {
     let pattern = match &command.args {
         CommandArgs::SingleKey(key) => &key.name,
-        _ => return "ERR invalid command\n".to_string(),
+        _ => return Err(SiderError::new(SiderErrorKind::InvalidCommand)),
     };
 
     // Convert Redis glob pattern to regex
     let regex_pattern = convert_redis_pattern_to_regex(pattern);
     let re = match Regex::new(&regex_pattern) {
         Ok(re) => re,
-        Err(e) => return format!("Error: {}\n", e),
+        Err(_) => return Err(SiderError::new(SiderErrorKind::RegexError)),
     };
 
     let mut results = vec![];
@@ -203,34 +202,34 @@ pub async fn get_keys(db: &Db, command: Command) -> String {
     }
 
     if results.is_empty() {
-        return "(empty array)\n".to_string();
+        return Ok("(empty array)\n".to_string());
     }
 
-    format_list_response(results)
+    Ok(format_list_response(results))
 }
 
-pub async fn exists(db: &Db, command: Command) -> String {
+pub async fn exists(db: &Db, command: Command) -> Result<String, SiderError> {
     let keys = match &command.args {
         CommandArgs::SingleKey(key) => vec![key.name.clone()],
         CommandArgs::MultipleKeys(keys) => keys.iter().map(|k| k.name.clone()).collect(),
-        _ => return "ERR invalid command\n".to_string(),
+        _ => return Err(SiderError::new(SiderErrorKind::InvalidCommand)),
     };
 
     let db_read = db.read().await;
-    let nb_keys = keys.iter().filter(|key| db_read.contains_key(*key)).count();
+    let nb_keys = keys.iter().filter(|key| db_read.contains_key(*key)).count() as i64;
 
-    format!("{}\n", nb_keys)
+    Ok(format_int(nb_keys))
 }
 
-pub async fn expire(db: &Db, command: Command) -> String {
+pub async fn expire(db: &Db, command: Command) -> Result<String, SiderError> {
     let key = match command.args {
         CommandArgs::SingleKey(key) => key,
-        _ => return "ERR invalid command\n".to_string(),
+        _ => return Err(SiderError::new(SiderErrorKind::InvalidCommand)),
     };
 
     let ttl = match key.expires_at {
         Some(ttl) => ttl,
-        None => return "Error: TTL is required\n".to_string(),
+        None => return Err(SiderError::new(SiderErrorKind::TTL)),
     };
 
     let mut db_write = db.write().await;
@@ -238,28 +237,28 @@ pub async fn expire(db: &Db, command: Command) -> String {
     match db_write.get_mut(&key.name) {
         Some(DbValue::StringKey(key)) => {
             key.set_ttl(ttl);
-            "(integer) 1\n".to_string()
+            Ok(format_int(1))
         }
-        None => "(integer) 0\n".to_string(),
-        Some(_) => ERROR_KEY_TYPE.to_string(),
+        None => Ok(format_int(0)),
+        Some(_) => Err(SiderError::new(SiderErrorKind::WrongType)),
     }
 }
 
-pub async fn ttl(db: &Db, command: Command) -> String {
+pub async fn ttl(db: &Db, command: Command) -> Result<String, SiderError> {
     let key = match command.args {
         CommandArgs::SingleKey(key) => key,
-        _ => return "ERR invalid command\n".to_string(),
+        _ => return Err(SiderError::new(SiderErrorKind::InvalidCommand)),
     };
 
     let db_read = db.read().await;
 
     let key = match db_read.get(&key.name) {
         Some(DbValue::StringKey(key)) => key,
-        None => return "(integer) -2\n".to_string(),
-        Some(_) => return ERROR_KEY_TYPE.to_string(),
+        None => return Ok(format_int(-2)),
+        Some(_) => return Err(SiderError::new(SiderErrorKind::WrongType)),
     };
 
-    format!("(integer) {}\n", key.get_ttl())
+    Ok(format_int(key.get_ttl()))
 }
 
 /// Converts Redis-style glob pattern into a valid regex pattern

@@ -1,10 +1,15 @@
-use crate::commands::utils::{format_list_response, ERROR_KEY_TYPE};
+use crate::commands::utils::{format_int, format_list_response, format_single_response};
+use crate::errors::{SiderError, SiderErrorKind};
 use crate::types::{Command, CommandArgs, Db, DbValue, KeyList, ListPushType, PopType};
 
-pub async fn push_to_list(db: &Db, command: Command, push_type: ListPushType) -> String {
+pub async fn push_to_list(
+    db: &Db,
+    command: Command,
+    push_type: ListPushType,
+) -> Result<String, SiderError> {
     let key_list = match command.args {
         CommandArgs::KeyWithValues(key) => key,
-        _ => return "ERR invalid command\n".to_string(),
+        _ => return Err(SiderError::new(SiderErrorKind::InvalidCommand)),
     };
 
     let key_name = key_list.name.clone();
@@ -23,7 +28,8 @@ pub async fn push_to_list(db: &Db, command: Command, push_type: ListPushType) ->
                     existing_list.values.extend(new_values);
                 }
             }
-            format!("(integer) {}\n", existing_list.values.len())
+            let nb = existing_list.values.len() as i64;
+            Ok(format_int(nb))
         }
         None => {
             if let ListPushType::LPUSH = push_type {
@@ -36,44 +42,55 @@ pub async fn push_to_list(db: &Db, command: Command, push_type: ListPushType) ->
                     values: new_values.clone(),
                 }),
             );
-            format!("(integer) {}\n", new_values.len())
+            let nb = new_values.len() as i64;
+            Ok(format_int(nb))
         }
-        Some(_) => ERROR_KEY_TYPE.to_string(),
+        Some(_) => Err(SiderError::new(SiderErrorKind::WrongType)),
     }
 }
 
-pub async fn lpush(db: &Db, command: Command) -> String {
+pub async fn lpush(db: &Db, command: Command) -> Result<String, SiderError> {
     push_to_list(db, command, ListPushType::LPUSH).await
 }
 
-pub async fn rpush(db: &Db, command: Command) -> String {
+pub async fn rpush(db: &Db, command: Command) -> Result<String, SiderError> {
     push_to_list(db, command, ListPushType::RPUSH).await
 }
 
-pub async fn lrange(db: &Db, command: Command) -> String {
+pub async fn lrange(db: &Db, command: Command) -> Result<String, SiderError> {
     let key_list = match command.args {
         CommandArgs::KeyWithValues(key) => key,
-        _ => return "ERR invalid command\n".to_string(),
+        _ => return Err(SiderError::new(SiderErrorKind::InvalidCommand)),
     };
 
     let key_name = key_list.name.clone();
 
     let min: isize = match key_list.values[0].parse::<isize>() {
         Ok(val) => val,
-        Err(_) => return "(error) value is not an integer or out of range\n".to_string(),
+        Err(_) => {
+            return Err(SiderError::with_message(
+                SiderErrorKind::Custom,
+                "(error) value is not an integer or out of range",
+            ))
+        }
     };
 
     let max: isize = match key_list.values[1].parse::<isize>() {
         Ok(val) => val,
-        Err(_) => return "(error) value is not an integer or out of range\n".to_string(),
+        Err(_) => {
+            return Err(SiderError::with_message(
+                SiderErrorKind::Custom,
+                "(error) value is not an integer or out of range",
+            ))
+        }
     };
 
     let db_read = db.read().await;
 
     let key = match db_read.get(&key_name) {
         Some(DbValue::ListKey(key)) => key,
-        Some(DbValue::StringKey(_)) => return ERROR_KEY_TYPE.to_string(),
-        _ => return "(empty array)\n".to_string(),
+        Some(DbValue::StringKey(_)) => return Err(SiderError::new(SiderErrorKind::WrongType)),
+        _ => return Ok("(empty array)\n".to_string()),
     };
 
     let len = key.values.len();
@@ -91,30 +108,30 @@ pub async fn lrange(db: &Db, command: Command) -> String {
     };
 
     if min >= max || min >= len {
-        return "(empty array)\r\n".to_string();
+        return Ok("(empty array)\n".to_string());
     }
 
     let results: &[String] = &key.values[min..max];
 
     if results.is_empty() {
-        return "(empty array)\n".to_string();
+        return Ok("(empty array)\n".to_string());
     }
 
-    format_list_response(results.to_vec())
+    Ok(format_list_response(results.to_vec()))
 }
 
-pub async fn lpop(db: &Db, command: Command) -> String {
+pub async fn lpop(db: &Db, command: Command) -> Result<String, SiderError> {
     pop_list(db, command, PopType::LPOP).await
 }
 
-pub async fn rpop(db: &Db, command: Command) -> String {
+pub async fn rpop(db: &Db, command: Command) -> Result<String, SiderError> {
     pop_list(db, command, PopType::RPOP).await
 }
 
-async fn pop_list(db: &Db, command: Command, pop_type: PopType) -> String {
+async fn pop_list(db: &Db, command: Command, pop_type: PopType) -> Result<String, SiderError> {
     let key = match &command.args {
         CommandArgs::SingleKey(key) => key,
-        _ => return "ERR invalid command\n".to_string(),
+        _ => return Err(SiderError::new(SiderErrorKind::InvalidCommand)),
     };
 
     let key_name = key.name.clone();
@@ -123,8 +140,8 @@ async fn pop_list(db: &Db, command: Command, pop_type: PopType) -> String {
 
     let key_db = match db_write.get_mut(&key_name) {
         Some(DbValue::ListKey(key)) => key,
-        Some(DbValue::StringKey(_)) => return ERROR_KEY_TYPE.to_string(),
-        _ => return "(empty array)\n".to_string(),
+        Some(DbValue::StringKey(_)) => return Err(SiderError::new(SiderErrorKind::WrongType)),
+        _ => return Ok("(empty array)\n".to_string()),
     };
 
     let nb = key
@@ -147,12 +164,17 @@ async fn pop_list(db: &Db, command: Command, pop_type: PopType) -> String {
         .collect();
 
     if removed.is_empty() {
-        return "(nil)\n".to_string();
+        return Ok("(nil)\n".to_string());
     }
 
     if let PopType::RPOP = pop_type {
         removed.reverse();
     }
 
-    format_list_response(removed)
+    // If LPOP is passed without arguments, return the first element
+    if nb == 1 {
+        return Ok(format_single_response(removed[0].as_str()));
+    }
+
+    Ok(format_list_response(removed))
 }

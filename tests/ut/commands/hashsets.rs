@@ -25,7 +25,7 @@ mod tests {
             args: CommandArgs::HashKey(key),
         };
 
-        let result = hset(&db, command).await;
+        let result = hset(&db, command).await.unwrap();
         assert_eq!(result, "(integer) 2\n");
 
         let db_read = db.read().await;
@@ -46,7 +46,7 @@ mod tests {
             args: CommandArgs::HashKey(key),
         };
 
-        let result = hset(&db, command).await;
+        let result = hset(&db, command).await.unwrap();
         assert_eq!(result, "(integer) 1\n");
 
         let key = KeyHash {
@@ -59,7 +59,7 @@ mod tests {
             args: CommandArgs::HashKey(key),
         };
 
-        let result = hset(&db, command).await;
+        let result = hset(&db, command).await.unwrap();
         assert_eq!(result, "(integer) 1\n");
 
         let db_read = db.read().await;
@@ -87,7 +87,7 @@ mod tests {
             args: CommandArgs::HashKey(key),
         };
 
-        let result = hset(&db, command).await;
+        let result = hset(&db, command).await.unwrap();
         assert_eq!(result, "(integer) 1\n");
 
         let key = KeyHash {
@@ -100,7 +100,7 @@ mod tests {
             args: CommandArgs::HashKey(key),
         };
 
-        let result = hset(&db, command).await;
+        let result = hset(&db, command).await.unwrap();
         assert_eq!(result, "(integer) 0\n");
 
         let db_read = db.read().await;
@@ -140,8 +140,8 @@ mod tests {
             }),
         };
 
-        let result = hget(&db, command).await;
-        assert_eq!(result, "Smith\n");
+        let result = hget(&db, command).await.unwrap();
+        assert_eq!(result, "\"Smith\"\n");
     }
 
     #[tokio::test]
@@ -168,7 +168,7 @@ mod tests {
             }),
         };
 
-        let result = hget(&db, command).await;
+        let result = hget(&db, command).await.unwrap();
         assert_eq!(result, "(nil)\n");
     }
 
@@ -184,7 +184,7 @@ mod tests {
             }),
         };
 
-        let result = hget(&db, command).await;
+        let result = hget(&db, command).await.unwrap();
         assert_eq!(result, "(nil)\n");
     }
 
@@ -206,7 +206,7 @@ mod tests {
             args: CommandArgs::HashKey(key),
         };
 
-        let result = hset(&db, command).await;
+        let result = hset(&db, command).await.unwrap();
         assert_eq!(result, "(integer) 3\n");
 
         let command = Command {
@@ -214,13 +214,13 @@ mod tests {
             args: CommandArgs::KeyName("user:1".to_string()),
         };
 
-        let result = hgetall(&db, command).await;
-        assert!(result.contains("name"));
-        assert!(result.contains("Smith"));
-        assert!(result.contains("first_name"));
-        assert!(result.contains("John"));
-        assert!(result.contains("age"));
-        assert!(result.contains("21"));
+        let result = hgetall(&db, command).await.unwrap();
+        assert!(result.contains("\"name\""));
+        assert!(result.contains("\"Smith\""));
+        assert!(result.contains("\"first_name\""));
+        assert!(result.contains("\"John\""));
+        assert!(result.contains("\"age\""));
+        assert!(result.contains("\"21\""));
     }
 
     #[tokio::test]
@@ -232,7 +232,7 @@ mod tests {
             args: CommandArgs::KeyName("non_existing".to_string()),
         };
 
-        let result = hgetall(&db, command).await;
+        let result = hgetall(&db, command).await.unwrap();
         assert_eq!(result, "(empty array)\n");
     }
 
@@ -254,7 +254,7 @@ mod tests {
             args: CommandArgs::HashKey(key),
         };
 
-        let result = hset(&db, command).await;
+        let result = hset(&db, command).await.unwrap();
         assert_eq!(result, "(integer) 3\n");
 
         let command = Command {
@@ -265,7 +265,7 @@ mod tests {
             }),
         };
 
-        let result = hdel(&db, command).await;
+        let result = hdel(&db, command).await.unwrap();
         assert!(result.contains("(integer) 2"));
 
         let command = Command {
@@ -276,7 +276,7 @@ mod tests {
             }),
         };
 
-        let result = hdel(&db, command).await;
+        let result = hdel(&db, command).await.unwrap();
         assert_eq!(result, "(integer) 0\n");
 
         let command = Command {
@@ -287,7 +287,7 @@ mod tests {
             }),
         };
 
-        let result = hdel(&db, command).await;
+        let result = hdel(&db, command).await.unwrap();
         assert_eq!(result, "(integer) 0\n");
 
         let command = Command {
@@ -298,7 +298,7 @@ mod tests {
             }),
         };
 
-        let result = hdel(&db, command).await;
+        let result = hdel(&db, command).await.unwrap();
         assert!(result.contains("(integer) 1"));
 
         let db_read = db.read().await;

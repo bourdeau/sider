@@ -1,15 +1,15 @@
-use crate::commands::utils::format_list_response;
-use crate::commands::utils::ERROR_KEY_TYPE;
+use crate::commands::utils::{format_int, format_list_response, format_single_response};
+use crate::errors::{SiderError, SiderErrorKind};
 use crate::types::Command;
 use crate::types::CommandArgs;
 use crate::types::Db;
 use crate::types::DbValue;
 use crate::types::KeyHash;
 
-pub async fn hset(db: &Db, command: Command) -> String {
+pub async fn hset(db: &Db, command: Command) -> Result<String, SiderError> {
     let key = match &command.args {
         CommandArgs::HashKey(key) => key,
-        _ => return "ERR invalid command\n".to_string(),
+        _ => return Err(SiderError::new(SiderErrorKind::InvalidCommand)),
     };
 
     let key_name = key.name.clone();
@@ -40,34 +40,34 @@ pub async fn hset(db: &Db, command: Command) -> String {
             );
             key_values.len()
         }
-        Some(_) => return ERROR_KEY_TYPE.to_string(),
+        Some(_) => return Err(SiderError::new(SiderErrorKind::WrongType)),
     };
 
-    format!("(integer) {}\n", nb)
+    Ok(format_int(nb as i64))
 }
 
-pub async fn hget(db: &Db, command: Command) -> String {
+pub async fn hget(db: &Db, command: Command) -> Result<String, SiderError> {
     let (hash_name, field_name) = match &command.args {
         CommandArgs::HashField(hash) => (&hash.key, &hash.field),
-        _ => return "ERR invalid command\n".to_string(),
+        _ => return Err(SiderError::new(SiderErrorKind::InvalidCommand)),
     };
 
     let db_read = db.read().await;
 
     match db_read.get(hash_name) {
         Some(DbValue::HashKey(hash)) => match hash.fields.get(field_name) {
-            Some(value) => format!("{}\n", value),
-            None => "(nil)\n".to_string(),
+            Some(value) => Ok(format_single_response(value)),
+            None => Ok("(nil)\n".to_string()),
         },
-        None => "(nil)\n".to_string(),
-        Some(_) => "ERR wrong type\n".to_string(),
+        None => Ok("(nil)\n".to_string()),
+        Some(_) => Err(SiderError::new(SiderErrorKind::WrongType)),
     }
 }
 
-pub async fn hgetall(db: &Db, command: Command) -> String {
+pub async fn hgetall(db: &Db, command: Command) -> Result<String, SiderError> {
     let key_name = match &command.args {
         CommandArgs::KeyName(name) => name,
-        _ => return "ERR invalid command\n".to_string(),
+        _ => return Err(SiderError::new(SiderErrorKind::InvalidCommand)),
     };
 
     let db_read = db.read().await;
@@ -76,19 +76,19 @@ pub async fn hgetall(db: &Db, command: Command) -> String {
         Some(DbValue::HashKey(hash)) => hash
             .fields
             .iter()
-            .map(|(k, v)| format!("{} {}", k, v))
+            .flat_map(|(k, v)| vec![k.clone(), v.clone()])
             .collect::<Vec<String>>(),
-        Some(_) => return "ERR wrong type\n".to_string(),
-        None => return "(empty array)\n".to_string(),
+        Some(_) => return Err(SiderError::new(SiderErrorKind::WrongType)),
+        None => return Ok("(empty array)\n".to_string()),
     };
 
-    format_list_response(results)
+    Ok(format_list_response(results))
 }
 
-pub async fn hdel(db: &Db, command: Command) -> String {
+pub async fn hdel(db: &Db, command: Command) -> Result<String, SiderError> {
     let key = match &command.args {
         CommandArgs::KeyWithValues(key) => key,
-        _ => return "ERR invalid command\n".to_string(),
+        _ => return Err(SiderError::new(SiderErrorKind::InvalidCommand)),
     };
 
     let key_name = key.name.clone();
@@ -108,10 +108,9 @@ pub async fn hdel(db: &Db, command: Command) -> String {
             if hash.fields.is_empty() {
                 db_write.swap_remove(&key_name);
             }
-
-            format!("(integer) {}\n", deleted_count)
+            Ok(format_int(deleted_count))
         }
-        Some(_) => "ERR wrong type\n".to_string(),
-        None => "(integer) 0\n".to_string(),
+        Some(_) => Err(SiderError::new(SiderErrorKind::WrongType)),
+        None => Ok(format_int(0)),
     }
 }

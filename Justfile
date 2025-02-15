@@ -12,7 +12,7 @@ client:
 test-ut:
   RUST_BACKTRACE=1 cargo test --tests ut
 
-test-func:
+test-inte:
   rm -rf ~/.local/share/sider/appendonly.aof
   RUST_BACKTRACE=1 cargo test --tests inte -- --nocapture --test-threads=1
 
