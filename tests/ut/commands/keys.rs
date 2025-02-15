@@ -24,7 +24,7 @@ mod tests {
         };
 
         let result = set_key(&db, command).await.unwrap().to_string();
-        assert_eq!(result, "\"Ok\"\n");
+        assert_eq!(result, "\"OK\"\n");
 
         let db_read = db.read().await;
         assert!(db_read.contains_key("my_key"));
