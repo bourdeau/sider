@@ -46,6 +46,6 @@ mod tests {
             assert!(db_read.is_empty());
         }
 
-        assert_eq!(result, "OK\n");
+        assert_eq!(result, "\"Ok\"\n");
     }
 }

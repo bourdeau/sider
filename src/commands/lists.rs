@@ -1,4 +1,4 @@
-use crate::commands::utils::{format_int, format_list_response};
+use crate::commands::utils::{format_int, format_list_response, format_single_response};
 use crate::errors::{SiderError, SiderErrorKind};
 use crate::types::{Command, CommandArgs, Db, DbValue, KeyList, ListPushType, PopType};
 
@@ -171,5 +171,5 @@ async fn pop_list(db: &Db, command: Command, pop_type: PopType) -> Result<String
         removed.reverse();
     }
 
-    Ok(format_list_response(removed))
+    Ok(format_single_response(removed[0].as_str()))
 }

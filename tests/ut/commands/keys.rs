@@ -24,7 +24,7 @@ mod tests {
         };
 
         let result = set_key(&db, command).await.unwrap();
-        assert_eq!(result, "Ok\n");
+        assert_eq!(result, "\"Ok\"\n");
 
         let db_read = db.read().await;
         assert!(db_read.contains_key("my_key"));
@@ -225,7 +225,7 @@ mod tests {
         };
 
         let result = exists(&db, command).await.unwrap();
-        assert_eq!(result, "1\n");
+        assert_eq!(result, "(integer) 1\n");
     }
 
     #[tokio::test]

@@ -1,4 +1,4 @@
-use crate::commands::utils::{format_int, format_list_response};
+use crate::commands::utils::{format_int, format_list_response, format_single_response};
 use crate::errors::{SiderError, SiderErrorKind};
 use crate::types::Command;
 use crate::types::CommandArgs;
@@ -56,7 +56,7 @@ pub async fn hget(db: &Db, command: Command) -> Result<String, SiderError> {
 
     match db_read.get(hash_name) {
         Some(DbValue::HashKey(hash)) => match hash.fields.get(field_name) {
-            Some(value) => Ok(format!("{}\n", value)), // Fix this with Response
+            Some(value) => Ok(format_single_response(value)),
             None => Ok("(nil)\n".to_string()),
         },
         None => Ok("(nil)\n".to_string()),
@@ -76,7 +76,7 @@ pub async fn hgetall(db: &Db, command: Command) -> Result<String, SiderError> {
         Some(DbValue::HashKey(hash)) => hash
             .fields
             .iter()
-            .map(|(k, v)| format!("{} {}", k, v))
+            .flat_map(|(k, v)| vec![k.clone(), v.clone()])
             .collect::<Vec<String>>(),
         Some(_) => return Err(SiderError::new(SiderErrorKind::WrongType)),
         None => return Ok("(empty array)\n".to_string()),

@@ -41,7 +41,7 @@ pub async fn set_key(db: &Db, command: Command) -> Result<String, SiderError> {
         .await
         .insert(key.name.clone(), DbValue::StringKey(key));
 
-    Ok("Ok\n".to_string())
+    Ok("\"Ok\"\n".to_string())
 }
 
 pub async fn delete_key(db: &Db, command: Command) -> Result<String, SiderError> {
@@ -218,8 +218,7 @@ pub async fn exists(db: &Db, command: Command) -> Result<String, SiderError> {
     let db_read = db.read().await;
     let nb_keys = keys.iter().filter(|key| db_read.contains_key(*key)).count() as i64;
 
-    let resp = format!("{}\n", nb_keys);
-    Ok(resp)
+    Ok(format_int(nb_keys))
 }
 
 pub async fn expire(db: &Db, command: Command) -> Result<String, SiderError> {

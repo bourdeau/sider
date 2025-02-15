@@ -50,6 +50,6 @@ impl fmt::Display for SiderError {
             SiderErrorKind::Custom => "Custom error",
         };
 
-        write!(f, "{}", err_msg)
+        writeln!(f, "{}", err_msg)
     }
 }
