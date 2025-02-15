@@ -21,8 +21,8 @@ jobs:
           toolchain: stable
       - run: RUST_BACKTRACE=1 cargo test --tests ut
   
-  tests-func:
-    name: tests-func
+  tests-inte:
+    name: tests-inte
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3

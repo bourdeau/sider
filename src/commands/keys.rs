@@ -16,7 +16,7 @@ pub async fn get_key(db: &Db, command: Command) -> Result<String, SiderError> {
 
     let key = match key {
         Some(DbValue::StringKey(k)) => k,
-        None => return Err(SiderError::new(SiderErrorKind::Nil)),
+        None => return Ok("(nil)\n".to_string()),
         Some(_) => return Err(SiderError::new(SiderErrorKind::WrongType)),
     };
 
@@ -28,7 +28,7 @@ pub async fn get_key(db: &Db, command: Command) -> Result<String, SiderError> {
         }
     }
 
-    Err(SiderError::new(SiderErrorKind::Nil))
+    Ok("(nil)\n".to_string())
 }
 
 pub async fn set_key(db: &Db, command: Command) -> Result<String, SiderError> {
@@ -41,7 +41,7 @@ pub async fn set_key(db: &Db, command: Command) -> Result<String, SiderError> {
         .await
         .insert(key.name.clone(), DbValue::StringKey(key));
 
-    Ok("Ok".to_string())
+    Ok("Ok\n".to_string())
 }
 
 pub async fn delete_key(db: &Db, command: Command) -> Result<String, SiderError> {
@@ -202,7 +202,7 @@ pub async fn get_keys(db: &Db, command: Command) -> Result<String, SiderError> {
     }
 
     if results.is_empty() {
-        return Err(SiderError::new(SiderErrorKind::EmptyArray));
+        return Ok("(empty array)\n".to_string());
     }
 
     Ok(format_list_response(results))
@@ -218,7 +218,8 @@ pub async fn exists(db: &Db, command: Command) -> Result<String, SiderError> {
     let db_read = db.read().await;
     let nb_keys = keys.iter().filter(|key| db_read.contains_key(*key)).count() as i64;
 
-    Ok(format_int(nb_keys))
+    let resp = format!("{}\n", nb_keys);
+    Ok(resp)
 }
 
 pub async fn expire(db: &Db, command: Command) -> Result<String, SiderError> {

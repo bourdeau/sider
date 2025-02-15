@@ -39,7 +39,7 @@ mod tests {
             assert!(!db_read.is_empty());
         }
 
-        let result = flush_db(&db).await;
+        let result = flush_db(&db).await.unwrap();
 
         {
             let db_read = db.read().await;

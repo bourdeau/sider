@@ -5,7 +5,7 @@ fn test_basic_set_get() {
     let mut server = start_server();
 
     let response = send_command("SET name Alice");
-    assert!(response.contains("OK"));
+    assert!(response.contains("Ok"));
 
     let response = send_command("GET name");
     assert!(response.contains("Alice"));

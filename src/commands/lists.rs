@@ -90,7 +90,7 @@ pub async fn lrange(db: &Db, command: Command) -> Result<String, SiderError> {
     let key = match db_read.get(&key_name) {
         Some(DbValue::ListKey(key)) => key,
         Some(DbValue::StringKey(_)) => return Err(SiderError::new(SiderErrorKind::WrongType)),
-        _ => return Err(SiderError::new(SiderErrorKind::EmptyArray)),
+        _ => return Ok("(empty array)\n".to_string()),
     };
 
     let len = key.values.len();
@@ -108,13 +108,13 @@ pub async fn lrange(db: &Db, command: Command) -> Result<String, SiderError> {
     };
 
     if min >= max || min >= len {
-        return Err(SiderError::new(SiderErrorKind::EmptyArray));
+        return Ok("(empty array)\n".to_string());
     }
 
     let results: &[String] = &key.values[min..max];
 
     if results.is_empty() {
-        return Err(SiderError::new(SiderErrorKind::EmptyArray));
+        return Ok("(empty array)\n".to_string());
     }
 
     Ok(format_list_response(results.to_vec()))
@@ -141,7 +141,7 @@ async fn pop_list(db: &Db, command: Command, pop_type: PopType) -> Result<String
     let key_db = match db_write.get_mut(&key_name) {
         Some(DbValue::ListKey(key)) => key,
         Some(DbValue::StringKey(_)) => return Err(SiderError::new(SiderErrorKind::WrongType)),
-        _ => return Err(SiderError::new(SiderErrorKind::EmptyArray)),
+        _ => return Ok("(empty array)\n".to_string()),
     };
 
     let nb = key
@@ -164,7 +164,7 @@ async fn pop_list(db: &Db, command: Command, pop_type: PopType) -> Result<String
         .collect();
 
     if removed.is_empty() {
-        return Err(SiderError::new(SiderErrorKind::Nil));
+        return Ok("(nil)\n".to_string());
     }
 
     if let PopType::RPOP = pop_type {

@@ -57,9 +57,9 @@ pub async fn hget(db: &Db, command: Command) -> Result<String, SiderError> {
     match db_read.get(hash_name) {
         Some(DbValue::HashKey(hash)) => match hash.fields.get(field_name) {
             Some(value) => Ok(format!("{}\n", value)), // Fix this with Response
-            None => Err(SiderError::new(SiderErrorKind::Nil)),
+            None => Ok("(nil)\n".to_string()),
         },
-        None => Err(SiderError::new(SiderErrorKind::Nil)),
+        None => Ok("(nil)\n".to_string()),
         Some(_) => Err(SiderError::new(SiderErrorKind::WrongType)),
     }
 }
@@ -79,7 +79,7 @@ pub async fn hgetall(db: &Db, command: Command) -> Result<String, SiderError> {
             .map(|(k, v)| format!("{} {}", k, v))
             .collect::<Vec<String>>(),
         Some(_) => return Err(SiderError::new(SiderErrorKind::WrongType)),
-        None => return Err(SiderError::new(SiderErrorKind::EmptyArray)),
+        None => return Ok("(empty array)\n".to_string()),
     };
 
     Ok(format_list_response(results))

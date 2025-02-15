@@ -3,8 +3,6 @@ use std::fmt;
 #[derive(Debug)]
 pub enum SiderErrorKind {
     InvalidCommand,
-    Nil,
-    EmptyArray,
     WrongType,
     NotInt,
     DatabaseError,
@@ -42,8 +40,6 @@ impl fmt::Display for SiderError {
 
         let err_msg = match self.error_type {
             SiderErrorKind::InvalidCommand => "Invalid command",
-            SiderErrorKind::Nil => "(nil)",
-            SiderErrorKind::EmptyArray => "(empty array)",
             SiderErrorKind::WrongType => {
                 "(error) WRONGTYPE Operation against a key holding the wrong kind of value"
             }
