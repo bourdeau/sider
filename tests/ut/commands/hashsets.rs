@@ -141,7 +141,7 @@ mod tests {
         };
 
         let result = hget(&db, command).await.unwrap();
-        assert_eq!(result, "Smith\n");
+        assert_eq!(result, "\"Smith\"\n");
     }
 
     #[tokio::test]
@@ -215,12 +215,12 @@ mod tests {
         };
 
         let result = hgetall(&db, command).await.unwrap();
-        assert!(result.contains("name"));
-        assert!(result.contains("Smith"));
-        assert!(result.contains("first_name"));
-        assert!(result.contains("John"));
-        assert!(result.contains("age"));
-        assert!(result.contains("21"));
+        assert!(result.contains("\"name\""));
+        assert!(result.contains("\"Smith\""));
+        assert!(result.contains("\"first_name\""));
+        assert!(result.contains("\"John\""));
+        assert!(result.contains("\"age\""));
+        assert!(result.contains("\"21\""));
     }
 
     #[tokio::test]

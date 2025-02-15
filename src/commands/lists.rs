@@ -171,5 +171,10 @@ async fn pop_list(db: &Db, command: Command, pop_type: PopType) -> Result<String
         removed.reverse();
     }
 
-    Ok(format_single_response(removed[0].as_str()))
+    // If LPOP is passed without arguments, return the first element
+    if nb == 1 {
+        return Ok(format_single_response(removed[0].as_str()));
+    }
+
+    Ok(format_list_response(removed))
 }

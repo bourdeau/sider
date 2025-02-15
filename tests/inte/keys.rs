@@ -8,7 +8,7 @@ fn test_basic_set_get() {
     assert!(response.contains("Ok"));
 
     let response = send_command("GET name");
-    assert!(response.contains("Alice"));
+    assert!(response.contains("\"Alice\""));
 
     stop_server(&mut server);
 }
@@ -51,18 +51,18 @@ fn test_key_regex() {
     send_command("SET age 32");
 
     let response = send_command("KEYS *");
-    assert!(response.contains("first_name"));
-    assert!(response.contains("last_name"));
+    assert!(response.contains("\"first_name\""));
+    assert!(response.contains("\"last_name\""));
 
     let response = send_command("KEYS first*");
-    assert!(response.contains("first_name"));
+    assert!(response.contains("\"first_name\""));
 
     let response = send_command("KEYS *name*");
-    assert!(response.contains("first_name"));
-    assert!(response.contains("last_name"));
+    assert!(response.contains("\"first_name\""));
+    assert!(response.contains("\"last_name\""));
 
     let response = send_command("KEYS f?rst_name");
-    assert!(response.contains("first_name"));
+    assert!(response.contains("\"first_name\""));
 
     send_command("FLUSHDB");
     std::thread::sleep(std::time::Duration::from_secs(10));
@@ -86,16 +86,16 @@ fn test_exists() {
     send_command("SET age 32");
 
     let response = send_command("EXISTS first_name");
-    assert!(response.contains("1"));
+    assert!(response.contains("(integer) 1"));
 
     let response = send_command("EXISTS middle_name");
-    assert!(response.contains("0"));
+    assert!(response.contains("(integer) 0"));
 
     let response = send_command("EXISTS first_name last_name middle_name");
-    assert!(response.contains("2"));
+    assert!(response.contains("(integer) 2"));
 
     let response = send_command("EXISTS first_name last_name age");
-    assert!(response.contains("3"));
+    assert!(response.contains("(integer) 3"));
 
     stop_server(&mut server);
 }
@@ -145,7 +145,7 @@ fn test_background_delete() {
     std::thread::sleep(std::time::Duration::from_secs(70));
 
     let response = send_command("EXISTS name");
-    assert!(response.contains("0"));
+    assert!(response.contains("(integer) 0"));
 
     stop_server(&mut server);
 }
@@ -163,7 +163,7 @@ fn test_incr() {
     assert!(response.contains("(integer) 2"));
 
     let response = send_command("GET counter");
-    assert!(response.contains("2"));
+    assert!(response.contains("\"2\""));
 
     stop_server(&mut server);
 }
