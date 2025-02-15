@@ -24,6 +24,7 @@ jobs:
   tests-inte:
     name: tests-inte
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v3
       - uses: actions-rust-lang/setup-rust-toolchain@v1
