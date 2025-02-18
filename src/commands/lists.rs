@@ -7,13 +7,12 @@ pub async fn push_to_list(
     command: Command,
     push_type: ListPushType,
 ) -> Result<SiderResponse, SiderError> {
-    let key_list = match command.args {
-        CommandArgs::KeyWithValues(key) => key,
+    let (key_name, values) = match command.args {
+        CommandArgs::KeyWithValues { key, values } => (key, values),
         _ => return Err(SiderError::InvalidCommand),
     };
 
-    let key_name = key_list.name.clone();
-    let mut new_values = key_list.values.clone();
+    let mut new_values = values.clone();
 
     let mut db_write = db.write().await;
 
@@ -58,19 +57,17 @@ pub async fn rpush(db: &Db, command: Command) -> Result<SiderResponse, SiderErro
 }
 
 pub async fn lrange(db: &Db, command: Command) -> Result<SiderResponse, SiderError> {
-    let key_list = match command.args {
-        CommandArgs::KeyWithValues(key) => key,
+    let (key_name, values) = match command.args {
+        CommandArgs::KeyWithValues { key, values } => (key, values),
         _ => return Err(SiderError::InvalidCommand),
     };
 
-    let key_name = key_list.name.clone();
-
-    let min: isize = match key_list.values[0].parse::<isize>() {
+    let min: isize = match values[0].parse::<isize>() {
         Ok(val) => val,
         Err(_) => return Err(SiderError::NotIntOrOutOfRange),
     };
 
-    let max: isize = match key_list.values[1].parse::<isize>() {
+    let max: isize = match values[1].parse::<isize>() {
         Ok(val) => val,
         Err(_) => return Err(SiderError::NotIntOrOutOfRange),
     };
@@ -123,12 +120,11 @@ async fn pop_list(
     command: Command,
     pop_type: PopType,
 ) -> Result<SiderResponse, SiderError> {
-    let key = match &command.args {
-        CommandArgs::SingleKey(key) => key,
+    let (key_name, value) = match &command.args {
+        CommandArgs::SingleKey(key) => (key.clone(), None),
+        CommandArgs::KeyWithValue { key, value } => (key.clone(), Some(value.clone())),
         _ => return Err(SiderError::InvalidCommand),
     };
-
-    let key_name = key.name.clone();
 
     let mut db_write = db.write().await;
 
@@ -138,12 +134,9 @@ async fn pop_list(
         _ => return Ok(SiderResponse::EmptyArray),
     };
 
-    let nb = key
-        .value
+    let nb = value
         .as_deref()
-        .unwrap_or("1")
-        .parse::<usize>()
-        .unwrap_or(1);
+        .map_or(1, |v| v.parse::<usize>().unwrap_or(1));
 
     let len = key_db.values.len();
 

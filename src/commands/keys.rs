@@ -5,7 +5,7 @@ use regex::Regex;
 
 pub async fn get_key(db: &Db, command: Command) -> Result<SiderResponse, SiderError> {
     let key_name = match &command.args {
-        CommandArgs::SingleKey(key) => &key.name,
+        CommandArgs::SingleKey(key) => &key.clone(),
         _ => return Err(SiderError::InvalidCommand),
     };
 
@@ -32,10 +32,12 @@ pub async fn get_key(db: &Db, command: Command) -> Result<SiderResponse, SiderEr
 }
 
 pub async fn set_key(db: &Db, command: Command) -> Result<SiderResponse, SiderError> {
-    let key = match command.args {
-        CommandArgs::SingleKey(key) => key,
+    let (key_name, value) = match command.args {
+        CommandArgs::KeyWithValue { key, value } => (key, value),
         _ => return Err(SiderError::InvalidCommand),
     };
+
+    let key = Key::new(key_name.clone(), value.clone(), None);
 
     db.write()
         .await
@@ -46,8 +48,8 @@ pub async fn set_key(db: &Db, command: Command) -> Result<SiderResponse, SiderEr
 
 pub async fn delete_key(db: &Db, command: Command) -> Result<SiderResponse, SiderError> {
     let keys = match &command.args {
-        CommandArgs::SingleKey(key) => vec![key.name.clone()],
-        CommandArgs::MultipleKeys(keys) => keys.iter().map(|k| k.name.clone()).collect(),
+        CommandArgs::SingleKey(key) => vec![key.clone()],
+        CommandArgs::MultipleKeys(keys) => keys.to_vec(),
         _ => return Err(SiderError::InvalidCommand),
     };
 
@@ -88,16 +90,8 @@ pub async fn decr(db: &Db, command: Command) -> Result<SiderResponse, SiderError
 // if the key holds a non-numeric value or a string that cannot
 // be parsed as a 64-bit signed integer.
 pub async fn incrby(db: &Db, command: Command) -> Result<SiderResponse, SiderError> {
-    let key_name = match &command.args {
-        CommandArgs::SingleKey(key) => key.name.clone(),
-        _ => return Err(SiderError::InvalidCommand),
-    };
-
-    let by_str = match &command.args {
-        CommandArgs::SingleKey(key) => match key.value.as_deref() {
-            Some(by) => by,
-            None => return Err(SiderError::NotInt),
-        },
+    let (key_name, by_str) = match &command.args {
+        CommandArgs::KeyWithValue { key, value } => (key.clone(), value.clone()),
         _ => return Err(SiderError::InvalidCommand),
     };
 
@@ -141,12 +135,10 @@ pub async fn incrby(db: &Db, command: Command) -> Result<SiderResponse, SiderErr
 }
 
 async fn incr_decr(db: &Db, command: Command, inc: bool) -> Result<SiderResponse, SiderError> {
-    let key = match command.args {
+    let key_name = match command.args {
         CommandArgs::SingleKey(key) => key,
         _ => return Err(SiderError::InvalidCommand),
     };
-
-    let key_name = key.name.clone();
 
     let mut db_write = db.write().await;
 
@@ -178,7 +170,7 @@ async fn incr_decr(db: &Db, command: Command, inc: bool) -> Result<SiderResponse
 /// Returns keys matching the Redis-style pattern
 pub async fn get_keys(db: &Db, command: Command) -> Result<SiderResponse, SiderError> {
     let pattern = match &command.args {
-        CommandArgs::SingleKey(key) => &key.name,
+        CommandArgs::SingleKey(key) => key,
         _ => return Err(SiderError::InvalidCommand),
     };
 
@@ -208,8 +200,8 @@ pub async fn get_keys(db: &Db, command: Command) -> Result<SiderResponse, SiderE
 
 pub async fn exists(db: &Db, command: Command) -> Result<SiderResponse, SiderError> {
     let keys = match &command.args {
-        CommandArgs::SingleKey(key) => vec![key.name.clone()],
-        CommandArgs::MultipleKeys(keys) => keys.iter().map(|k| k.name.clone()).collect(),
+        CommandArgs::SingleKey(key) => vec![key.to_string()],
+        CommandArgs::MultipleKeys(keys) => keys.to_vec(),
         _ => return Err(SiderError::InvalidCommand),
     };
 
@@ -220,19 +212,16 @@ pub async fn exists(db: &Db, command: Command) -> Result<SiderResponse, SiderErr
 }
 
 pub async fn expire(db: &Db, command: Command) -> Result<SiderResponse, SiderError> {
-    let key = match command.args {
-        CommandArgs::SingleKey(key) => key,
+    let (key_name, ttl) = match command.args {
+        CommandArgs::KeyWithValue { key, value } => (key, value),
         _ => return Err(SiderError::InvalidCommand),
     };
 
-    let ttl = match key.expires_at {
-        Some(ttl) => ttl,
-        None => return Err(SiderError::TTL),
-    };
+    let ttl = ttl.parse::<i64>().map_err(|_| SiderError::TTL)?;
 
     let mut db_write = db.write().await;
 
-    match db_write.get_mut(&key.name) {
+    match db_write.get_mut(&key_name) {
         Some(DbValue::StringKey(key)) => {
             key.set_ttl(ttl);
             Ok(SiderResponse::Int(1))
@@ -243,14 +232,14 @@ pub async fn expire(db: &Db, command: Command) -> Result<SiderResponse, SiderErr
 }
 
 pub async fn ttl(db: &Db, command: Command) -> Result<SiderResponse, SiderError> {
-    let key = match command.args {
+    let key_name = match command.args {
         CommandArgs::SingleKey(key) => key,
         _ => return Err(SiderError::InvalidCommand),
     };
 
     let db_read = db.read().await;
 
-    let key = match db_read.get(&key.name) {
+    let key = match db_read.get(&key_name) {
         Some(DbValue::StringKey(key)) => key,
         None => return Ok(SiderResponse::Int(-2)),
         Some(_) => return Err(SiderError::WrongType),

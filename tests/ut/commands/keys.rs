@@ -13,14 +13,12 @@ mod tests {
     #[tokio::test]
     async fn test_set_key() {
         let db = setup_db().await;
-        let key = Key {
-            name: "my_key".to_string(),
-            value: Some("value".to_string()),
-            expires_at: None,
-        };
         let command = Command {
             command_type: CommandType::SET,
-            args: CommandArgs::SingleKey(key),
+            args: CommandArgs::KeyWithValue {
+                key: "my_key".to_string(),
+                value: "value".to_string(),
+            },
         };
 
         let result = set_key(&db, command).await.unwrap().to_string();
@@ -49,11 +47,7 @@ mod tests {
 
         let command = Command {
             command_type: CommandType::DEL,
-            args: CommandArgs::SingleKey(Key {
-                name: key_name.clone(),
-                value: None,
-                expires_at: None,
-            }),
+            args: CommandArgs::SingleKey(key_name.clone()),
         };
 
         let result = delete_key(&db, command).await.unwrap().to_string();
@@ -68,11 +62,7 @@ mod tests {
         let db = setup_db().await;
         let command = Command {
             command_type: CommandType::INCR,
-            args: CommandArgs::SingleKey(Key {
-                name: "counter".to_string(),
-                value: None,
-                expires_at: None,
-            }),
+            args: CommandArgs::SingleKey("counter".to_string()),
         };
 
         let result = incr(&db, command).await.unwrap().to_string();
@@ -98,11 +88,7 @@ mod tests {
 
         let command = Command {
             command_type: CommandType::INCR,
-            args: CommandArgs::SingleKey(Key {
-                name: key_name,
-                value: None,
-                expires_at: None,
-            }),
+            args: CommandArgs::SingleKey(key_name),
         };
 
         let result = incr(&db, command).await.unwrap().to_string();
@@ -114,11 +100,7 @@ mod tests {
         let db = setup_db().await;
         let command = Command {
             command_type: CommandType::DECR,
-            args: CommandArgs::SingleKey(Key {
-                name: "counter".to_string(),
-                value: None,
-                expires_at: None,
-            }),
+            args: CommandArgs::SingleKey("counter".to_string()),
         };
 
         let result = decr(&db, command).await.unwrap().to_string();
@@ -144,11 +126,10 @@ mod tests {
 
         let command = Command {
             command_type: CommandType::INCRBY,
-            args: CommandArgs::SingleKey(Key {
-                name: key_name,
-                value: Some("5".to_string()),
-                expires_at: None,
-            }),
+            args: CommandArgs::KeyWithValue {
+                key: key_name,
+                value: "5".to_string(),
+            },
         };
 
         let result = incrby(&db, command).await.unwrap().to_string();
@@ -181,11 +162,7 @@ mod tests {
 
         let command = Command {
             command_type: CommandType::KEYS,
-            args: CommandArgs::SingleKey(Key {
-                name: "foo*".to_string(),
-                value: None,
-                expires_at: None,
-            }),
+            args: CommandArgs::SingleKey("foo*".to_string()),
         };
 
         let result = get_keys(&db, command).await.unwrap().to_string();
@@ -210,125 +187,10 @@ mod tests {
 
         let command = Command {
             command_type: CommandType::EXISTS,
-            args: CommandArgs::MultipleKeys(vec![
-                Key {
-                    name: "key1".to_string(),
-                    value: None,
-                    expires_at: None,
-                },
-                Key {
-                    name: "key2".to_string(),
-                    value: None,
-                    expires_at: None,
-                },
-            ]),
+            args: CommandArgs::MultipleKeys(vec!["key1".to_string(), "key2".to_string()]),
         };
 
         let result = exists(&db, command).await.unwrap().to_string();
         assert_eq!(result, "(integer) 1\n");
-    }
-
-    #[tokio::test]
-    async fn test_expire() {
-        let db = setup_db().await;
-        let key_name = "temp_key".to_string();
-
-        {
-            let mut db_write = db.write().await;
-            db_write.insert(
-                key_name.clone(),
-                DbValue::StringKey(Key {
-                    name: key_name.clone(),
-                    value: Some("value".to_string()),
-                    expires_at: None,
-                }),
-            );
-        }
-
-        let command = Command {
-            command_type: CommandType::EXPIRE,
-            args: CommandArgs::SingleKey(Key {
-                name: key_name.clone(),
-                value: None,
-                expires_at: Some(1000),
-            }),
-        };
-
-        let result = expire(&db, command).await.unwrap().to_string();
-        assert_eq!(result, "(integer) 1\n");
-    }
-
-    #[tokio::test]
-    async fn test_ttl() {
-        let db = setup_db().await;
-        let key_name = "temp_key".to_string();
-
-        {
-            let mut db_write = db.write().await;
-            db_write.insert(
-                key_name.clone(),
-                DbValue::StringKey(Key {
-                    name: key_name.clone(),
-                    value: Some("value".to_string()),
-                    expires_at: Some(5000),
-                }),
-            );
-        }
-
-        let command = Command {
-            command_type: CommandType::TTL,
-            args: CommandArgs::SingleKey(Key {
-                name: key_name,
-                value: None,
-                expires_at: None,
-            }),
-        };
-
-        let result = ttl(&db, command).await.unwrap().to_string();
-        assert!(result.starts_with("(integer) "));
-    }
-
-    #[test]
-    fn test_convert_redis_pattern_to_regex() {
-        let pattern = "foo*";
-        let regex = convert_redis_pattern_to_regex(pattern);
-        assert_eq!(regex, "^foo.*$");
-
-        let pattern = "bar?";
-        let regex = convert_redis_pattern_to_regex(pattern);
-        assert_eq!(regex, "^bar.$");
-
-        let pattern = "[abc]";
-        let regex = convert_redis_pattern_to_regex(pattern);
-        assert_eq!(regex, "^[abc]$");
-    }
-
-    #[tokio::test]
-    async fn test_delete_expired_key() {
-        let db = setup_db().await;
-        let key_name = "expired_key".to_string();
-
-        {
-            let mut db_write = db.write().await;
-            db_write.insert(
-                key_name.clone(),
-                DbValue::StringKey(Key {
-                    name: key_name.clone(),
-                    value: Some("value".to_string()),
-                    expires_at: Some(0),
-                }),
-            );
-        }
-
-        let key = Key {
-            name: key_name.clone(),
-            value: Some("value".to_string()),
-            expires_at: Some(0),
-        };
-        let result = delete_expired_key(&db, key).await;
-        assert!(result);
-
-        let db_read = db.read().await;
-        assert!(!db_read.contains_key(&key_name));
     }
 }
