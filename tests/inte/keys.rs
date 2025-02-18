@@ -141,10 +141,22 @@ fn test_background_delete() {
     send_command("SET name Smith");
     send_command("EXPIRE name 10");
 
+    send_command("LPUSH list:expire Alice Bob Charlie");
+    send_command("EXPIRE list:expire 3");
+
+    send_command("HSET hash:expire name Smith first_name John age 21");
+    send_command("EXPIRE hash:expire 3");
+
     // Background delete occurs every 60 secs
     std::thread::sleep(std::time::Duration::from_secs(70));
 
     let response = send_command("EXISTS name");
+    assert!(response.contains("(integer) 0"));
+
+    let response = send_command("EXISTS list:expire");
+    assert!(response.contains("(integer) 0"));
+
+    let response = send_command("EXISTS hash:expire");
     assert!(response.contains("(integer) 0"));
 
     stop_server(&mut server);

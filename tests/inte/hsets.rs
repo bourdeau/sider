@@ -14,6 +14,17 @@ fn test_hset() {
 }
 
 #[test]
+fn test_expire() {
+    let mut server = start_server();
+
+    send_command("HSET myhash:expire name Smith first_name John age 21");
+    let response = send_command("EXPIRE myhash:expire 3");
+    assert!(response.contains("(integer) 1"));
+
+    stop_server(&mut server);
+}
+
+#[test]
 fn test_hget() {
     let mut server = start_server();
 

@@ -72,7 +72,6 @@ fn format_command_args(args: &CommandArgs, cmd_type: CommandType) -> String {
         CommandArgs::MultipleKeys(keys) => keys.join(" "),
         CommandArgs::KeyWithValue { key, value } => format!("{} {}", key, value),
         CommandArgs::KeyWithValues { key, values } => format!("{} {}", key, values.join(" ")),
-        CommandArgs::KeyWithTTL { key, ttl } => format!("{} {}", key, ttl),
         CommandArgs::HashFields { key, fields } => format!(
             "{} {}",
             key,

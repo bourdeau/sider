@@ -37,7 +37,7 @@ pub async fn set_key(db: &Db, command: Command) -> Result<SiderResponse, SiderEr
         _ => return Err(SiderError::InvalidCommand),
     };
 
-    let key = Key::new(key_name.clone(), value.clone(), None);
+    let key = Key::new(key_name.clone(), Some(value.clone()), None);
 
     db.write()
         .await
@@ -145,7 +145,7 @@ async fn incr_decr(db: &Db, command: Command, inc: bool) -> Result<SiderResponse
     let key = match db_write.get_mut(&key_name) {
         Some(DbValue::StringKey(key)) => key,
         None => {
-            let key = Key::new(key_name.clone(), "0".to_string(), None);
+            let key = Key::new(key_name.clone(), Some("0".to_string()), None);
             db_write.insert(key_name.clone(), DbValue::StringKey(key));
             match db_write.get_mut(&key_name) {
                 Some(DbValue::StringKey(key)) => key,
@@ -226,8 +226,15 @@ pub async fn expire(db: &Db, command: Command) -> Result<SiderResponse, SiderErr
             key.set_ttl(ttl);
             Ok(SiderResponse::Int(1))
         }
+        Some(DbValue::ListKey(key)) => {
+            key.set_ttl(ttl);
+            Ok(SiderResponse::Int(1))
+        }
+        Some(DbValue::HashKey(key)) => {
+            key.set_ttl(ttl);
+            Ok(SiderResponse::Int(1))
+        }
         None => Ok(SiderResponse::Int(0)),
-        Some(_) => Err(SiderError::WrongType),
     }
 }
 
