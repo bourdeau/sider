@@ -67,8 +67,8 @@ mod tests {
             _ => panic!("Expected HashKey"),
         };
 
-        assert_eq!(stored_hash.fields.get("name"), Some(&"Doe".to_string()));
-        assert_eq!(stored_hash.fields.get("age"), Some(&"30".to_string()));
+        assert_eq!(stored_hash.data.get("name"), Some(&"Doe".to_string()));
+        assert_eq!(stored_hash.data.get("age"), Some(&"30".to_string()));
     }
 
     #[tokio::test]

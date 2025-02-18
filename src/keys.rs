@@ -5,13 +5,13 @@ impl Key {
     pub fn new(name: String, value: String, expires_at: Option<i64>) -> Self {
         Key {
             name,
-            value: Some(value),
+            data: Some(value),
             expires_at,
         }
     }
 
     pub fn get_name_value_as_string(&self) -> String {
-        match &self.value {
+        match &self.data {
             Some(v) => format!("{} {}", self.name, v),
             None => self.name.to_string(),
         }

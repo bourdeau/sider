@@ -59,29 +59,15 @@ pub enum CommandArgs {
 }
 
 #[derive(Debug, Clone, Default)]
-pub struct Key {
+pub struct ExpirableKey<T> {
     pub name: String,
-    pub value: Option<String>,
+    pub data: T,
     pub expires_at: Option<i64>,
 }
 
-#[derive(Debug, Clone, Default)]
-pub struct KeyList {
-    pub name: String,
-    pub values: Vec<String>,
-}
-
-#[derive(Debug, Clone, Default)]
-pub struct KeyHash {
-    pub name: String,
-    pub fields: IndexMap<String, String>,
-}
-
-#[derive(Debug, Clone)]
-pub struct HashField {
-    pub key: String,
-    pub field: String,
-}
+pub type Key = ExpirableKey<Option<String>>;
+pub type KeyList = ExpirableKey<Vec<String>>;
+pub type KeyHash = ExpirableKey<IndexMap<String, String>>;
 
 #[derive(Debug, Clone)]
 pub enum DbValue {

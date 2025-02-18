@@ -21,9 +21,9 @@ pub async fn hset(db: &Db, command: Command) -> Result<SiderResponse, SiderError
 
     let nb = match key {
         Some(DbValue::HashKey(mut k)) => {
-            let before_len = k.fields.len();
-            k.fields.extend(key_values.clone());
-            let after_len = k.fields.len();
+            let before_len = k.data.len();
+            k.data.extend(key_values.clone());
+            let after_len = k.data.len();
             db_write.insert(key_name, DbValue::HashKey(k));
             after_len - before_len
         }
@@ -32,7 +32,8 @@ pub async fn hset(db: &Db, command: Command) -> Result<SiderResponse, SiderError
                 key_name.clone(),
                 DbValue::HashKey(KeyHash {
                     name: key_name,
-                    fields: key_values.clone(),
+                    data: key_values.clone(),
+                    ..Default::default()
                 }),
             );
             key_values.len()
@@ -52,7 +53,7 @@ pub async fn hget(db: &Db, command: Command) -> Result<SiderResponse, SiderError
     let db_read = db.read().await;
 
     match db_read.get(hash_name) {
-        Some(DbValue::HashKey(hash)) => match hash.fields.get(field_name) {
+        Some(DbValue::HashKey(hash)) => match hash.data.get(field_name) {
             Some(value) => Ok(SiderResponse::SimpleString(value.to_string())),
             None => Ok(SiderResponse::Nil),
         },
@@ -70,8 +71,8 @@ pub async fn hgetall(db: &Db, command: Command) -> Result<SiderResponse, SiderEr
     let db_read = db.read().await;
 
     let results = match db_read.get(key_name) {
-        Some(DbValue::HashKey(hash)) => hash
-            .fields
+        Some(DbValue::HashKey(key)) => key
+            .data
             .iter()
             .flat_map(|(k, v)| vec![k.clone(), v.clone()])
             .collect::<Vec<String>>(),
@@ -94,12 +95,12 @@ pub async fn hdel(db: &Db, command: Command) -> Result<SiderResponse, SiderError
         Some(DbValue::HashKey(hash)) => {
             let mut deleted_count = 0;
             for field in fields {
-                if hash.fields.swap_remove(&field).is_some() {
+                if hash.data.swap_remove(&field).is_some() {
                     deleted_count += 1;
                 }
             }
 
-            if hash.fields.is_empty() {
+            if hash.data.is_empty() {
                 db_write.swap_remove(&key_name);
             }
             Ok(SiderResponse::Int(deleted_count))

@@ -39,7 +39,7 @@ mod tests {
                 key_name.clone(),
                 DbValue::StringKey(Key {
                     name: key_name.clone(),
-                    value: Some("value".to_string()),
+                    data: Some("value".to_string()),
                     expires_at: None,
                 }),
             );
@@ -80,7 +80,7 @@ mod tests {
                 key_name.clone(),
                 DbValue::StringKey(Key {
                     name: key_name.clone(),
-                    value: Some("5".to_string()),
+                    data: Some("5".to_string()),
                     expires_at: None,
                 }),
             );
@@ -118,7 +118,7 @@ mod tests {
                 key_name.clone(),
                 DbValue::StringKey(Key {
                     name: key_name.clone(),
-                    value: Some("10".to_string()),
+                    data: Some("10".to_string()),
                     expires_at: None,
                 }),
             );
@@ -146,7 +146,7 @@ mod tests {
                 "foo".to_string(),
                 DbValue::StringKey(Key {
                     name: "foo".to_string(),
-                    value: Some("bar".to_string()),
+                    data: Some("bar".to_string()),
                     expires_at: None,
                 }),
             );
@@ -154,7 +154,7 @@ mod tests {
                 "foobar".to_string(),
                 DbValue::StringKey(Key {
                     name: "foobar".to_string(),
-                    value: Some("baz".to_string()),
+                    data: Some("baz".to_string()),
                     expires_at: None,
                 }),
             );
@@ -179,7 +179,7 @@ mod tests {
                 "key1".to_string(),
                 DbValue::StringKey(Key {
                     name: "key1".to_string(),
-                    value: Some("val1".to_string()),
+                    data: Some("val1".to_string()),
                     expires_at: None,
                 }),
             );

@@ -102,17 +102,17 @@ async fn dump_db_to_aof(db: &Db) -> Result<(), Error> {
     for (key, value) in db_write.iter() {
         match value {
             DbValue::StringKey(k) => {
-                if let Some(val) = &k.value {
+                if let Some(val) = &k.data {
                     output.push_str(&format!("SET {} {}\n", key, val));
                 }
             }
             DbValue::ListKey(l) => {
-                let values = l.values.join(" ");
+                let values = l.data.join(" ");
                 output.push_str(&format!("LPUSH {} {}\n", key, values));
             }
             DbValue::HashKey(hash_key) => {
                 let fields = hash_key
-                    .fields
+                    .data
                     .iter()
                     .map(|(field, value)| format!("{} {}", field, value))
                     .collect::<Vec<_>>()

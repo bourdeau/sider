@@ -20,7 +20,7 @@ pub async fn get_key(db: &Db, command: Command) -> Result<SiderResponse, SiderEr
         Some(_) => return Err(SiderError::WrongType),
     };
 
-    if let Some(value) = &key.value {
+    if let Some(value) = &key.data {
         let deleted = delete_expired_key(db, key.clone()).await; // No read lock at this point
 
         if !deleted {
@@ -109,7 +109,7 @@ pub async fn incrby(db: &Db, command: Command) -> Result<SiderResponse, SiderErr
                 key_name.clone(),
                 DbValue::StringKey(Key {
                     name: key_name.clone(),
-                    value: Some("0".to_string()),
+                    data: Some("0".to_string()),
                     ..Default::default()
                 }),
             );
@@ -121,7 +121,7 @@ pub async fn incrby(db: &Db, command: Command) -> Result<SiderResponse, SiderErr
         Some(_) => return Err(SiderError::WrongType),
     };
 
-    let num_str = key.value.as_deref().unwrap_or("0");
+    let num_str = key.data.as_deref().unwrap_or("0");
 
     let num = match num_str.parse::<i64>() {
         Ok(n) => n,
@@ -129,7 +129,7 @@ pub async fn incrby(db: &Db, command: Command) -> Result<SiderResponse, SiderErr
     };
 
     let new_value = num + by;
-    key.value = Some(new_value.to_string());
+    key.data = Some(new_value.to_string());
 
     Ok(SiderResponse::Int(new_value))
 }
@@ -156,13 +156,13 @@ async fn incr_decr(db: &Db, command: Command, inc: bool) -> Result<SiderResponse
         Some(_) => return Err(SiderError::WrongType),
     };
 
-    let Ok(num) = key.value.as_deref().unwrap_or("0").parse::<i64>() else {
+    let Ok(num) = key.data.as_deref().unwrap_or("0").parse::<i64>() else {
         return Err(SiderError::NotInt);
     };
 
     let new_value = if inc { num + 1 } else { num - 1 };
 
-    key.value = Some(new_value.to_string());
+    key.data = Some(new_value.to_string());
 
     Ok(SiderResponse::Int(new_value))
 }

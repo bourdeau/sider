@@ -21,13 +21,13 @@ pub async fn push_to_list(
             match push_type {
                 ListPushType::LPUSH => {
                     new_values.reverse();
-                    existing_list.values.splice(0..0, new_values);
+                    existing_list.data.splice(0..0, new_values);
                 }
                 ListPushType::RPUSH => {
-                    existing_list.values.extend(new_values);
+                    existing_list.data.extend(new_values);
                 }
             }
-            let nb = existing_list.values.len() as i64;
+            let nb = existing_list.data.len() as i64;
             Ok(SiderResponse::Int(nb))
         }
         None => {
@@ -38,7 +38,8 @@ pub async fn push_to_list(
                 key_name.clone(),
                 DbValue::ListKey(KeyList {
                     name: key_name,
-                    values: new_values.clone(),
+                    data: new_values.clone(),
+                    ..Default::default()
                 }),
             );
             let nb = new_values.len() as i64;
@@ -80,7 +81,7 @@ pub async fn lrange(db: &Db, command: Command) -> Result<SiderResponse, SiderErr
         _ => return Ok(SiderResponse::EmptyArray),
     };
 
-    let len = key.values.len();
+    let len = key.data.len();
 
     let min = if min >= 0 {
         min as usize
@@ -98,7 +99,7 @@ pub async fn lrange(db: &Db, command: Command) -> Result<SiderResponse, SiderErr
         return Ok(SiderResponse::EmptyArray);
     }
 
-    let results: &[String] = &key.values[min..max];
+    let results: &[String] = &key.data[min..max];
 
     if results.is_empty() {
         return Ok(SiderResponse::EmptyArray);
@@ -138,7 +139,7 @@ async fn pop_list(
         .as_deref()
         .map_or(1, |v| v.parse::<usize>().unwrap_or(1));
 
-    let len = key_db.values.len();
+    let len = key_db.data.len();
 
     let (start, end) = match pop_type {
         PopType::LPOP => (0, nb),
@@ -146,8 +147,8 @@ async fn pop_list(
     };
 
     let mut removed: Vec<String> = key_db
-        .values
-        .drain(start..end.min(key_db.values.len()))
+        .data
+        .drain(start..end.min(key_db.data.len()))
         .collect();
 
     if removed.is_empty() {

@@ -4,6 +4,7 @@
 #![deny(clippy::unwrap_used)]
 // False positive with None
 #![allow(non_snake_case)]
+#![deny(dead_code)]
 
 pub mod aof;
 pub mod commands;
