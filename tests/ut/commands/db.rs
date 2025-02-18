@@ -20,7 +20,7 @@ mod tests {
                 "key1".to_string(),
                 DbValue::StringKey(Key {
                     name: "key1".to_string(),
-                    value: Some("value1".to_string()),
+                    data: Some("value1".to_string()),
                     expires_at: None,
                 }),
             );
@@ -28,7 +28,7 @@ mod tests {
                 "key2".to_string(),
                 DbValue::StringKey(Key {
                     name: "key2".to_string(),
-                    value: Some("value2".to_string()),
+                    data: Some("value2".to_string()),
                     expires_at: None,
                 }),
             );

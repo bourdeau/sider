@@ -4,7 +4,6 @@ use crate::types::{Db, DbValue};
 use tokio::time::{self, Duration};
 use tracing::info;
 
-// Remove Key with expired ttl. ListKey don't have ttl for now
 pub async fn delete_expired_keys(db: Db) {
     let mut interval = time::interval(Duration::from_secs(60));
 
@@ -15,8 +14,8 @@ pub async fn delete_expired_keys(db: Db) {
         let mut db_write = db.write().await;
         db_write.retain(|_, value| match value {
             DbValue::StringKey(key) => !key.is_expired(),
-            DbValue::ListKey(_) => true,
-            DbValue::HashKey(_) => true,
+            DbValue::ListKey(key) => !key.is_expired(),
+            DbValue::HashKey(key) => !key.is_expired(),
         });
     }
 }

@@ -1,23 +1,16 @@
-use crate::types::Key;
+use crate::types::KeyBase;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-impl Key {
-    pub fn new(name: String, value: String, expires_at: Option<i64>) -> Self {
-        Key {
+impl<T> KeyBase<T> {
+    pub fn new(name: String, data: T, expires_at: Option<i64>) -> Self {
+        KeyBase {
             name,
-            value: Some(value),
+            data,
             expires_at,
         }
     }
 
-    pub fn get_name_value_as_string(&self) -> String {
-        match &self.value {
-            Some(v) => format!("{} {}", self.name, v),
-            None => self.name.to_string(),
-        }
-    }
-
-    fn get_current_timestamp(&self) -> i64 {
+    fn get_current_timestamp() -> i64 {
         SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .expect("Time went backwards")
@@ -25,18 +18,19 @@ impl Key {
     }
 
     pub fn get_ttl(&self) -> i64 {
-        let current_ts = self.get_current_timestamp();
         self.expires_at
-            .map_or(-1, |expires_at| expires_at - current_ts)
+            .map_or(-1, |expires_at| expires_at - Self::get_current_timestamp())
     }
 
     pub fn set_ttl(&mut self, ttl: i64) {
-        self.expires_at = Some(self.get_current_timestamp() + ttl);
+        self.expires_at = Some(Self::get_current_timestamp() + ttl);
     }
 
-    // A key without ttl return -1 and is not expired
+    // A key without ttl returns -1 and is not expired
     pub fn is_expired(&self) -> bool {
-        let ttl = self.get_ttl();
-        ttl <= -2
+        match self.expires_at {
+            Some(expires_at) => expires_at <= Self::get_current_timestamp(),
+            None => false,
+        }
     }
 }

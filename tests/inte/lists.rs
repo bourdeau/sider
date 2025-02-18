@@ -24,6 +24,17 @@ fn test_lpush() {
 }
 
 #[test]
+fn test_expire() {
+    let mut server = start_server();
+
+    send_command("LPUSH list:expire Alice Bob Charlie");
+    let response = send_command("EXPIRE list:expire 3");
+    assert!(response.contains("(integer) 1"));
+
+    stop_server(&mut server);
+}
+
+#[test]
 fn test_rpush() {
     let mut server = start_server();
 
