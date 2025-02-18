@@ -46,6 +46,6 @@ pub async fn process_command(command: String, db: &Db, restore: bool) -> String 
 
     match response {
         Ok(resp) => resp.to_string(),
-        Err(err) => err.to_string(),
+        Err(err) => format!("{}\n", err),
     }
 }

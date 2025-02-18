@@ -37,12 +37,25 @@ pub enum CommandType {
 
 #[derive(Debug, Clone)]
 pub enum CommandArgs {
-    KeyName(String),
-    SingleKey(Key),
-    KeyWithValues(KeyList),
-    MultipleKeys(Vec<Key>),
-    HashKey(KeyHash),
-    HashField(HashField),
+    NoArgs,                    // PONG, FLUSHDB
+    SingleKey(String),         // GET key
+    MultipleKeys(Vec<String>), // DEL key1 key2 key3
+    KeyWithValue {
+        key: String,
+        value: String,
+    }, // SET key value
+    KeyWithValues {
+        key: String,
+        values: Vec<String>,
+    },
+    KeyWithTTL {
+        key: String,
+        ttl: i64,
+    }, // EXPIRE key 10
+    HashFields {
+        key: String,
+        fields: IndexMap<String, String>,
+    }, // HSET key field1 value1 field2 value2
 }
 
 #[derive(Debug, Clone, Default)]

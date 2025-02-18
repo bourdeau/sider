@@ -7,13 +7,10 @@ use crate::types::DbValue;
 use crate::types::KeyHash;
 
 pub async fn hset(db: &Db, command: Command) -> Result<SiderResponse, SiderError> {
-    let key = match &command.args {
-        CommandArgs::HashKey(key) => key,
+    let (key_name, key_values) = match &command.args {
+        CommandArgs::HashFields { key, fields } => (key.to_string(), fields),
         _ => return Err(SiderError::InvalidCommand),
     };
-
-    let key_name = key.name.clone();
-    let key_values = key.fields.clone();
 
     let key = {
         let db_read = db.read().await;
@@ -48,7 +45,7 @@ pub async fn hset(db: &Db, command: Command) -> Result<SiderResponse, SiderError
 
 pub async fn hget(db: &Db, command: Command) -> Result<SiderResponse, SiderError> {
     let (hash_name, field_name) = match &command.args {
-        CommandArgs::HashField(hash) => (&hash.key, &hash.field),
+        CommandArgs::KeyWithValue { key, value } => (key, value),
         _ => return Err(SiderError::InvalidCommand),
     };
 
@@ -66,7 +63,7 @@ pub async fn hget(db: &Db, command: Command) -> Result<SiderResponse, SiderError
 
 pub async fn hgetall(db: &Db, command: Command) -> Result<SiderResponse, SiderError> {
     let key_name = match &command.args {
-        CommandArgs::KeyName(name) => name,
+        CommandArgs::SingleKey(key_name) => key_name,
         _ => return Err(SiderError::InvalidCommand),
     };
 
@@ -86,13 +83,10 @@ pub async fn hgetall(db: &Db, command: Command) -> Result<SiderResponse, SiderEr
 }
 
 pub async fn hdel(db: &Db, command: Command) -> Result<SiderResponse, SiderError> {
-    let key = match &command.args {
-        CommandArgs::KeyWithValues(key) => key,
+    let (key_name, fields) = match &command.args {
+        CommandArgs::KeyWithValues { key, values } => (key.clone(), values.clone()),
         _ => return Err(SiderError::InvalidCommand),
     };
-
-    let key_name = key.name.clone();
-    let fields = key.values.clone();
 
     let mut db_write = db.write().await;
 

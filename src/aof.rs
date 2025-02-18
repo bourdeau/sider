@@ -1,4 +1,4 @@
-use crate::types::{Command, CommandArgs, Db, DbValue};
+use crate::types::{Command, CommandArgs, CommandType, Db, DbValue};
 use dirs::home_dir;
 use std::io::Error;
 use std::path::PathBuf;
@@ -26,43 +26,18 @@ pub fn get_aof_file() -> PathBuf {
     log_path.join("appendonly.aof")
 }
 
-// This is a mess. It writes commands which fetch keys
-// instead of writing only commands which create or delete keys.
 pub async fn write_aof(command: &Command) -> std::io::Result<()> {
+    if is_read_command(command.command_type.clone()) {
+        return Ok(());
+    }
+
     let log_path = get_aof_log_dir();
 
     if !log_path.exists() {
         fs::create_dir_all(&log_path).await?;
     }
 
-    let keys_value = match &command.args {
-        CommandArgs::SingleKey(key) => key.get_name_value_as_string(),
-        CommandArgs::MultipleKeys(keys) => keys
-            .iter()
-            .map(|key| key.get_name_value_as_string())
-            .collect::<Vec<_>>()
-            .join(" "),
-        CommandArgs::KeyWithValues(list_key) => {
-            format!("{} {}", list_key.name, list_key.values.join(" "))
-        }
-        CommandArgs::HashKey(hash_key) => {
-            let fields = hash_key
-                .fields
-                .iter()
-                .map(|(field, value)| format!("{} {}", field, value))
-                .collect::<Vec<_>>()
-                .join(" ");
-            format!("{} {}", hash_key.name, fields)
-        }
-        CommandArgs::HashField(hash_field) => {
-            format!(
-                "{:?} {} {}",
-                command.command_type, hash_field.key, hash_field.field
-            )
-        }
-        CommandArgs::KeyName(key) => key.to_string(),
-    };
-
+    let keys_value = format_command_args(&command.args, command.command_type.clone());
     let formatted = format!("{:?} {}\n", command.command_type, keys_value);
 
     let file_path = log_path.join("appendonly.aof");
@@ -74,8 +49,40 @@ pub async fn write_aof(command: &Command) -> std::io::Result<()> {
         .await?;
 
     file.write_all(formatted.as_bytes()).await?;
-
     Ok(())
+}
+
+fn is_read_command(cmd_type: CommandType) -> bool {
+    matches!(
+        cmd_type,
+        CommandType::GET
+            | CommandType::KEYS
+            | CommandType::EXISTS
+            | CommandType::TTL
+            | CommandType::HGET
+            | CommandType::HGETALL
+            | CommandType::LRANGE
+    )
+}
+
+fn format_command_args(args: &CommandArgs, cmd_type: CommandType) -> String {
+    match args {
+        CommandArgs::NoArgs => format!("{:?}", cmd_type),
+        CommandArgs::SingleKey(key) => key.clone(),
+        CommandArgs::MultipleKeys(keys) => keys.join(" "),
+        CommandArgs::KeyWithValue { key, value } => format!("{} {}", key, value),
+        CommandArgs::KeyWithValues { key, values } => format!("{} {}", key, values.join(" ")),
+        CommandArgs::KeyWithTTL { key, ttl } => format!("{} {}", key, ttl),
+        CommandArgs::HashFields { key, fields } => format!(
+            "{} {}",
+            key,
+            fields
+                .iter()
+                .map(|(field, value)| format!("{} {}", field, value))
+                .collect::<Vec<_>>()
+                .join(" ")
+        ),
+    }
 }
 
 async fn dump_db_to_aof(db: &Db) -> Result<(), Error> {
