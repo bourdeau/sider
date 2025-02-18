@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.1](https://github.com/bourdeau/sider/compare/v0.5.0...v0.5.1) (2025-02-18)
+
+
+### Bug Fixes
+
+* AOF read cmd (closes [#64](https://github.com/bourdeau/sider/issues/64)) ([#72](https://github.com/bourdeau/sider/issues/72)) ([870bee3](https://github.com/bourdeau/sider/commit/870bee32e56dbe13b80dcc77018267a2862402ca))
+* ttl for all keys (closes [#45](https://github.com/bourdeau/sider/issues/45))  ([#75](https://github.com/bourdeau/sider/issues/75)) ([9a949f5](https://github.com/bourdeau/sider/commit/9a949f5c87bb4cbefdd574cc9774fef676ea82e7))
+
 ## [0.5.0](https://github.com/bourdeau/sider/compare/v0.4.1...v0.5.0) (2025-02-15)
 
 
