@@ -15,21 +15,21 @@ pub enum SiderResponse {
 impl fmt::Display for SiderResponse {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            SiderResponse::Ok => write!(f, "\"OK\""),
-            SiderResponse::Int(value) => write!(f, "(integer) {}", value),
+            SiderResponse::Ok => write!(f, "+OK\r\n"),
+            SiderResponse::Int(value) => write!(f, "+(integer) {}\r\n", value),
             SiderResponse::SimpleString(value) => write!(f, "+{}\r\n", value),
             SiderResponse::List(values) => {
-                let formatted = values
-                    .iter()
-                    .enumerate()
-                    .map(|(i, v)| format!("{}) \"{}\"", i + 1, v))
-                    .collect::<Vec<_>>()
-                    .join("\n");
-                writeln!(f, "{}", formatted)
+                let mut response = format!("*{}\r\n", values.len());
+
+                for value in values {
+                    response.push_str(&format!("${}\r\n{}\r\n", value.len(), value));
+                }
+
+                write!(f, "{}", response)
             }
-            SiderResponse::Nil => write!(f, "(nil)"),
-            SiderResponse::EmptyArray => write!(f, "(empty array)"),
-            SiderResponse::Error(err) => write!(f, "{}", err),
+            SiderResponse::Nil => write!(f, "+(nil)\r\n"),
+            SiderResponse::EmptyArray => write!(f, "+(empty array)\r\n"),
+            SiderResponse::Error(err) => write!(f, "-{}\r\n", err),
         }
     }
 }

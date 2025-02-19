@@ -23,6 +23,8 @@ pub async fn handle_client(mut socket: TcpStream, db: Db) -> Result<(), Box<dyn 
             .trim()
             .to_string();
 
+        info!(raw_command);
+
         let parsed = match parse_resp_command(&raw_command) {
             Ok(parsed) => parsed,
             Err(e) => {
@@ -36,6 +38,8 @@ pub async fn handle_client(mut socket: TcpStream, db: Db) -> Result<(), Box<dyn 
             Ok(resp) => resp.to_string(),
             Err(e) => format_redis_error(e),
         };
+
+        info!(response);
 
         socket.write_all(response.as_bytes()).await?;
     }

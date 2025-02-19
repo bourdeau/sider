@@ -7,6 +7,6 @@ pub async fn pong() -> Result<SiderResponse, SiderError> {
 
 pub async fn docs() -> Result<SiderResponse, SiderError> {
     Ok(SiderResponse::SimpleString(
-        "No docs for now bro".to_string(),
+        "No docs for now".to_string(),
     ))
 }
