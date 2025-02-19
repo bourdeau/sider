@@ -39,7 +39,11 @@ pub async fn restore_from_aof(db: Db) {
         if command.is_empty() {
             continue;
         }
-        process_command(command.to_string(), &db, false).await;
+
+        let command_vec: Vec<String> =
+            command.split_whitespace().map(|s| s.to_string()).collect();
+
+        let _ = process_command(command_vec, &db, false).await;
         info!("Restored: {}", command);
     }
 }
