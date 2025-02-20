@@ -1,10 +1,21 @@
 use super::utils::{send_command, start_server, stop_server};
 
 #[test]
+fn test_ping() {
+    let mut server = start_server();
+
+    let response = send_command("PING");
+    assert!(response.contains("PONG"));
+
+    stop_server(&mut server);
+}
+
+#[test]
 fn test_basic_set_get() {
     let mut server = start_server();
 
     let response = send_command("SET name Alice");
+    panic!("{}", response);
     assert!(response.contains("OK"));
 
     let response = send_command("GET name");

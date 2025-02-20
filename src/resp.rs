@@ -19,14 +19,15 @@ pub fn parse_resp_command(resp_command: &str) -> Result<Vec<String>, SiderError>
         if line.starts_with('$') {
             continue;
         }
-        if line == "COMMAND" {
-            continue;
-        }
         command.push(line.to_string());
     }
 
     if command.len() != nb_elements {
         return Err(SiderError::WrongElementCount);
+    }
+
+    if command[0] == "COMMAND" {
+        command.remove(0);
     }
 
     Ok(command)

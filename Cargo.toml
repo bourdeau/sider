@@ -23,6 +23,7 @@ tracing-subscriber = "0.3.19"
 
 [dev-dependencies]
 criterion = { version = "0.5.1", features = ["async_futures"] }
+redis = "0.29.0"
 
 [[bench]]
 name = "my_benchmark"

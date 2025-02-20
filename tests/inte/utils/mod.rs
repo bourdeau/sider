@@ -1,4 +1,4 @@
-use std::io::{Read, Write};
+use redis::{Client, Cmd, RedisResult};
 use std::net::TcpStream;
 use std::process::{Child, Command};
 use std::thread::sleep;
@@ -33,13 +33,28 @@ pub fn stop_server(server: &mut Child) {
 }
 
 pub fn send_command(command: &str) -> String {
-    let mut stream = TcpStream::connect("127.0.0.1:6379").expect("Failed to connect to server");
-    stream
-        .write_all(command.as_bytes())
-        .expect("Failed to send command");
+    let client = Client::open("redis://127.0.0.1:6379/").expect("Failed to connect to Redis");
+    let mut conn = client
+        .get_connection()
+        .expect("Failed to get Redis connection");
 
-    let mut buffer = [0; 1024];
-    let n = stream.read(&mut buffer).expect("Failed to read response");
+    let args: Vec<&str> = command.split_whitespace().collect();
+    if args.is_empty() {
+        return "-ERR Empty command\r\n".to_string();
+    }
 
-    String::from_utf8_lossy(&buffer[..n]).to_string()
+    let response: RedisResult<String> = Cmd::new().arg(args).query(&mut conn);
+
+    response.unwrap_or_else(|e| format!("-ERR {}\r\n", e))
 }
+// pub fn send_command(command: &str) -> String {
+//     let mut stream = TcpStream::connect("127.0.0.1:6379").expect("Failed to connect to server");
+//     stream
+//         .write_all(command.as_bytes())
+//         .expect("Failed to send command");
+//
+//     let mut buffer = [0; 1024];
+//     let n = stream.read(&mut buffer).expect("Failed to read response");
+//
+//     String::from_utf8_lossy(&buffer[..n]).to_string()
+// }

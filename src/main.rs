@@ -11,6 +11,7 @@ use std::sync::Arc;
 use tokio::net::TcpListener;
 use tokio::sync::RwLock;
 use tracing::{error, info};
+use tokio::io::AsyncWriteExt;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -39,14 +40,17 @@ async fn main() -> Result<(), Box<dyn Error>> {
     tokio::spawn(clean_up_db(db.clone()));
 
     loop {
-        let (socket, addr) = listener.accept().await?;
+        let (mut socket, addr) = listener.accept().await?;
         info!("New client connected: {}", addr);
 
-        // Clone the Arc for the new task
         let db = Arc::clone(&db);
 
-        // Spawn a task to handle each client
         tokio::spawn(async move {
+            // Initial handshake for redis-rs
+            if let Err(_) = socket.write_all(b"+PONG\r\n").await {
+                return;
+            }
+
             if let Err(e) = handle_client(socket, db).await {
                 error!("Error handling client {}: {:?}", addr, e);
             }
