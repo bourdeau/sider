@@ -24,7 +24,6 @@ impl fmt::Display for SiderResponse {
                 for value in values {
                     response.push_str(&format!("${}\r\n{}\r\n", value.len(), value));
                 }
-
                 write!(f, "{}", response)
             }
             SiderResponse::Nil => write!(f, "+(nil)\r\n"),

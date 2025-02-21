@@ -45,16 +45,5 @@ pub fn send_command(command: &str) -> String {
 
     let response: RedisResult<String> = Cmd::new().arg(args).query(&mut conn);
 
-    response.unwrap_or_else(|e| format!("-ERR {}\r\n", e))
+    response.unwrap_or_else(|e| format!("{}", e))
 }
-// pub fn send_command(command: &str) -> String {
-//     let mut stream = TcpStream::connect("127.0.0.1:6379").expect("Failed to connect to server");
-//     stream
-//         .write_all(command.as_bytes())
-//         .expect("Failed to send command");
-//
-//     let mut buffer = [0; 1024];
-//     let n = stream.read(&mut buffer).expect("Failed to read response");
-//
-//     String::from_utf8_lossy(&buffer[..n]).to_string()
-// }

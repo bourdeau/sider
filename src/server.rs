@@ -24,14 +24,6 @@ pub async fn handle_client(mut socket: TcpStream, db: Db) -> Result<(), Box<dyn 
 
         info!(raw_command);
 
-        // Handle CLIENT SETINFO to prevent blocking
-        // Will be implemented later
-        if raw_command.contains("CLIENT") {
-            info!("Handling CLIENT SETINFO with +OK response");
-            socket.write_all(b"+OK\r\n").await?;
-            continue;
-        }
-
         let parsed = match parse_resp_command(&raw_command) {
             Ok(parsed) => parsed,
             Err(e) => {

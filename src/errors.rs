@@ -8,11 +8,11 @@ pub enum SiderError {
     Nil,
     #[error("(empty array)")]
     EmptyArray,
-    #[error("(error) WRONGTYPE Operation against a key holding the wrong kind of value")]
+    #[error("ERR WRONGTYPE Operation against a key holding the wrong kind of value")]
     WrongType,
     #[error("ERR value is not an integer")]
     NotInt,
-    #[error("(error) value is not an integer or out of range")]
+    #[error("value is not an integer or out of range")]
     NotIntOrOutOfRange,
     #[error("ERR unexpected database error")]
     DatabaseError,

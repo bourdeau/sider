@@ -17,8 +17,7 @@ fn test_lpush() {
     assert!(response.contains("(integer) 6"));
 
     let response = send_command("GET names");
-    assert!(response
-        .contains("(error) WRONGTYPE Operation against a key holding the wrong kind of value"));
+    assert!(response.contains("WRONGTYPE Operation against a key holding the wrong kind of value"));
 
     stop_server(&mut server);
 }
@@ -51,8 +50,8 @@ fn test_rpush() {
     assert!(response.contains("(integer) 6"));
 
     let response = send_command("GET names");
-    assert!(response
-        .contains("(error) WRONGTYPE Operation against a key holding the wrong kind of value"));
+    assert!(response.contains("WRONGTYPE Operation against a key holding the wrong kind of value"));
+
 
     stop_server(&mut server);
 }
@@ -65,16 +64,16 @@ fn test_lrange() {
     assert!(response.contains("(integer) 3"));
 
     let response = send_command("LRANGE mylist 0 -1");
-    assert!(response.contains("1) \"A\""));
-    assert!(response.contains("2) \"B\""));
-    assert!(response.contains("3) \"C\""));
+    assert!(response.contains("1) A"));
+    assert!(response.contains("2) B"));
+    assert!(response.contains("3) C"));
 
     let response = send_command("LRANGE mylist 1 2");
-    assert!(response.contains("1) \"B\""));
-    assert!(response.contains("2) \"C\""));
+    assert!(response.contains("1) B"));
+    assert!(response.contains("2) C"));
 
     let response = send_command("LRANGE mylist -1 -1");
-    assert!(response.contains("1) \"C\""));
+    assert!(response.contains("1) C"));
 
     let response = send_command("LRANGE mylist 10 20");
     assert!(response.contains("(empty array)"));
@@ -84,8 +83,8 @@ fn test_lrange() {
 
     send_command("SET notalist 123");
     let response = send_command("LRANGE notalist 0 -1");
-    assert!(response
-        .contains("(error) WRONGTYPE Operation against a key holding the wrong kind of value"));
+    assert!(response.contains("WRONGTYPE Operation against a key holding the wrong kind of value"));
+
 
     stop_server(&mut server);
 }
@@ -98,18 +97,19 @@ fn test_lpop() {
     assert!(response.contains("(integer) 5"));
 
     let response = send_command("LPOP lpoplist");
-    assert!(response.contains("\"E\""));
+    assert!(response.contains("E"));
 
     let response = send_command("LPOP lpoplist 2");
-    assert!(response.contains("1) \"D\""));
-    assert!(response.contains("2) \"C\""));
-
-    let response = send_command("LPOP lpoplist 10");
-    assert!(response.contains("1) \"B\""));
-    assert!(response.contains("2) \"A\""));
-
-    let response = send_command("LPOP lpoplist");
-    assert!(response.contains("(nil)"));
+    assert_eq!(response, "Coucou bisou");
+    // assert!(response.contains("1) D"));
+    // assert!(response.contains("2) C"));
+    //
+    // let response = send_command("LPOP lpoplist 10");
+    // assert!(response.contains("1) B"));
+    // assert!(response.contains("2) A"));
+    //
+    // let response = send_command("LPOP lpoplist");
+    // assert!(response.contains("(nil)"));
 
     stop_server(&mut server);
 }
@@ -122,11 +122,11 @@ fn test_rpop() {
     assert!(response.contains("(integer) 3"));
 
     let response = send_command("RPOP rpoplist");
-    assert!(response.contains("\"C\""));
+    assert!(response.contains("C"));
 
     let response = send_command("RPOP rpoplist 2");
-    assert!(response.contains("1) \"B\""));
-    assert!(response.contains("2) \"A\""));
+    assert!(response.contains("1) B"));
+    assert!(response.contains("2) A"));
 
     let response = send_command("RPOP rpoplist");
     assert!(response.contains("(nil)"));
