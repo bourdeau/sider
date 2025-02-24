@@ -1,4 +1,4 @@
-use redis::{Client, Cmd, RedisResult};
+use redis::{Client, Cmd, FromRedisValue, RedisResult, Value};
 use std::net::TcpStream;
 use std::process::{Child, Command};
 use std::thread::sleep;
@@ -43,7 +43,23 @@ pub fn send_command(command: &str) -> String {
         return "-ERR Empty command\r\n".to_string();
     }
 
-    let response: RedisResult<String> = Cmd::new().arg(args).query(&mut conn);
+    // Execute the command once and capture the raw response
+    let raw_response: RedisResult<Value> = Cmd::new().arg(args).query(&mut conn);
 
-    response.unwrap_or_else(|e| format!("{}", e))
+    match raw_response {
+        Ok(Value::Okay) => "OK".to_string(), // Handle OK response
+        Ok(Value::Int(int_value)) => format!("(integer) {}", int_value), // Handle integers (e.g., LPUSH, LLEN)
+        Ok(Value::BulkString(bytes)) => String::from_utf8_lossy(&bytes).to_string(), // Handle bulk string responses
+        Ok(Value::Array(items)) => {
+            let strings: Vec<String> = items
+                .into_iter()
+                .filter_map(|v| FromRedisValue::from_redis_value(&v).ok())
+                .collect();
+            format!("{:?}", strings) // Handle multi-value responses (e.g., LPOP with count)
+        }
+        Ok(Value::SimpleString(s)) => s, // Handle simple string responses
+        Ok(Value::Nil) => "(nil)".to_string(), // Handle nil responses
+        Err(e) => format!("{}", e),      // Handle errors
+        _ => "-ERR Unexpected response\r\n".to_string(),
+    }
 }

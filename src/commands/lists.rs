@@ -163,6 +163,6 @@ async fn pop_list(
     if nb == 1 {
         return Ok(SiderResponse::SimpleString(removed[0].clone()));
     }
-    
+
     Ok(SiderResponse::List(removed))
 }

@@ -1,7 +1,7 @@
-use crate::process::process_command;
-use crate::types::Db;
 use crate::errors::format_redis_error;
+use crate::process::process_command;
 use crate::resp::parse_resp_command;
+use crate::types::Db;
 use std::error::Error;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
@@ -41,13 +41,13 @@ pub async fn handle_client(mut socket: TcpStream, db: Db) -> Result<(), Box<dyn 
                 info!(response);
                 socket.write_all(response.as_bytes()).await?;
                 socket.flush().await?;
-            },
+            }
             Err(e) => {
                 let error_response = format_redis_error(e);
                 warn!(error_response);
                 socket.write_all(error_response.as_bytes()).await?;
                 socket.flush().await?;
-            },
+            }
         }
     }
 }

@@ -3,9 +3,12 @@ use crate::commands::build::*;
 use crate::errors::SiderError;
 use crate::types::Command;
 
-pub async fn parse_command(mut args: Vec<String>, restore: bool) -> Result<Command, SiderError> {
+pub async fn parse_command(
+    mut args: Vec<String>,
+    restore: bool,
+) -> Result<Command, SiderError> {
     if args.is_empty() {
-        return Err(SiderError::InvalidCommand)
+        return Err(SiderError::InvalidCommand);
     }
 
     let command_type = args[0].to_uppercase();
