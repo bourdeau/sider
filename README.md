@@ -17,7 +17,7 @@ cargo run
 In another terminal:
 
 ```
-nc 127.0.0.1 6379
+redis-cli
 SET first_name John
 ```
 
