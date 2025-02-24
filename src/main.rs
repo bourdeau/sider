@@ -42,10 +42,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
         let (socket, addr) = listener.accept().await?;
         info!("New client connected: {}", addr);
 
-        // Clone the Arc for the new task
         let db = Arc::clone(&db);
 
-        // Spawn a task to handle each client
         tokio::spawn(async move {
             if let Err(e) = handle_client(socket, db).await {
                 error!("Error handling client {}: {:?}", addr, e);

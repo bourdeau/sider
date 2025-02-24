@@ -1,10 +1,11 @@
+use crate::errors::format_redis_error;
 use crate::process::process_command;
+use crate::resp::parse_resp_command;
 use crate::types::Db;
-
 use std::error::Error;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
-use tracing::info;
+use tracing::{info, warn};
 
 pub async fn handle_client(mut socket: TcpStream, db: Db) -> Result<(), Box<dyn Error>> {
     let mut buffer = [0; 1024];
@@ -17,14 +18,36 @@ pub async fn handle_client(mut socket: TcpStream, db: Db) -> Result<(), Box<dyn 
             return Ok(());
         }
 
-        let command = String::from_utf8_lossy(&buffer[..bytes_read])
+        let raw_command = String::from_utf8_lossy(&buffer[..bytes_read])
             .trim()
             .to_string();
 
-        info!("{}", command);
+        info!(raw_command);
 
-        let response = process_command(command, &db, false).await;
+        let parsed = match parse_resp_command(&raw_command) {
+            Ok(parsed) => parsed,
+            Err(e) => {
+                let error_response = format_redis_error(e);
+                warn!(error_response);
+                socket.write_all(error_response.as_bytes()).await?;
+                socket.flush().await?;
+                continue;
+            }
+        };
 
-        socket.write_all(response.as_bytes()).await?;
+        match process_command(parsed, &db, false).await {
+            Ok(resp) => {
+                let response = resp.to_string();
+                info!(response);
+                socket.write_all(response.as_bytes()).await?;
+                socket.flush().await?;
+            }
+            Err(e) => {
+                let error_response = format_redis_error(e);
+                warn!(error_response);
+                socket.write_all(error_response.as_bytes()).await?;
+                socket.flush().await?;
+            }
+        }
     }
 }

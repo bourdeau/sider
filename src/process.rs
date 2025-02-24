@@ -7,20 +7,18 @@ use crate::commands::hashsets::*;
 use crate::commands::keys::*;
 use crate::commands::lists::*;
 use crate::commands::misc::*;
+use crate::errors::SiderError;
+use crate::response::SiderResponse;
 
-pub async fn process_command(command: String, db: &Db, restore: bool) -> String {
-    let parts: Vec<&str> = command.split_whitespace().collect();
+pub async fn process_command(
+    command: Vec<String>,
+    db: &Db,
+    restore: bool,
+) -> Result<SiderResponse, SiderError> {
+    let command = parse_command(command, restore).await?;
 
-    if parts.is_empty() {
-        return "ERROR: Empty command\n".to_string();
-    }
-
-    let command = match parse_command(&command, restore).await {
-        Ok(cmd) => cmd,
-        Err(e) => return format!("ERROR: {}\n", e),
-    };
-
-    let response = match command.command_type {
+    match command.command_type {
+        CommandType::DOCS => docs().await,
         CommandType::PONG => pong().await,
         CommandType::GET => get_key(db, command).await,
         CommandType::SET => set_key(db, command).await,
@@ -42,10 +40,5 @@ pub async fn process_command(command: String, db: &Db, restore: bool) -> String 
         CommandType::HGET => hget(db, command).await,
         CommandType::HGETALL => hgetall(db, command).await,
         CommandType::HDEL => hdel(db, command).await,
-    };
-
-    match response {
-        Ok(resp) => resp.to_string(),
-        Err(err) => format!("{}\n", err),
     }
 }

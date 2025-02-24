@@ -22,7 +22,7 @@ mod tests {
         };
 
         let result = set_key(&db, command).await.unwrap().to_string();
-        assert_eq!(result, "\"OK\"\n");
+        assert_eq!(result, "+OK\r\n");
 
         let db_read = db.read().await;
         assert!(db_read.contains_key("my_key"));
@@ -51,7 +51,7 @@ mod tests {
         };
 
         let result = delete_key(&db, command).await.unwrap().to_string();
-        assert_eq!(result, "(integer) 1\n");
+        assert_eq!(result, "+(integer) 1\r\n");
 
         let db_read = db.read().await;
         assert!(!db_read.contains_key(&key_name));
@@ -66,7 +66,7 @@ mod tests {
         };
 
         let result = incr(&db, command).await.unwrap().to_string();
-        assert_eq!(result, "(integer) 1\n");
+        assert_eq!(result, "+(integer) 1\r\n");
     }
 
     #[tokio::test]
@@ -92,7 +92,7 @@ mod tests {
         };
 
         let result = incr(&db, command).await.unwrap().to_string();
-        assert_eq!(result, "(integer) 6\n");
+        assert_eq!(result, "+(integer) 6\r\n");
     }
 
     #[tokio::test]
@@ -104,7 +104,7 @@ mod tests {
         };
 
         let result = decr(&db, command).await.unwrap().to_string();
-        assert_eq!(result, "(integer) -1\n");
+        assert_eq!(result, "+(integer) -1\r\n");
     }
 
     #[tokio::test]
@@ -133,7 +133,7 @@ mod tests {
         };
 
         let result = incrby(&db, command).await.unwrap().to_string();
-        assert_eq!(result, "(integer) 15\n");
+        assert_eq!(result, "+(integer) 15\r\n");
     }
 
     #[tokio::test]
@@ -166,7 +166,7 @@ mod tests {
         };
 
         let result = get_keys(&db, command).await.unwrap().to_string();
-        assert_eq!(result, "1) \"foo\"\n2) \"foobar\"\n");
+        assert_eq!(result, "*2\r\n$3\r\nfoo\r\n$6\r\nfoobar\r\n");
     }
 
     #[tokio::test]
@@ -191,6 +191,6 @@ mod tests {
         };
 
         let result = exists(&db, command).await.unwrap().to_string();
-        assert_eq!(result, "(integer) 1\n");
+        assert_eq!(result, "+(integer) 1\r\n");
     }
 }

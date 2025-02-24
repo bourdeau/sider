@@ -12,6 +12,7 @@ pub struct Command {
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub enum CommandType {
+    DOCS,
     PONG,
     GET,
     SET,

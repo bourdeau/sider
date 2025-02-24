@@ -1,14 +1,24 @@
 use super::utils::{send_command, start_server, stop_server};
 
 #[test]
-fn test_basic_set_get() {
+fn test_ping() {
+    let mut server = start_server();
+
+    let response = send_command("PING");
+    assert!(response.contains("PONG"));
+
+    stop_server(&mut server);
+}
+
+#[test]
+fn test_set_get() {
     let mut server = start_server();
 
     let response = send_command("SET name Alice");
-    assert!(response.contains("OK"));
+    assert_eq!(response, "OK");
 
     let response = send_command("GET name");
-    assert!(response.contains("\"Alice\""));
+    assert!(response.contains("Alice"));
 
     stop_server(&mut server);
 }
@@ -175,7 +185,7 @@ fn test_incr() {
     assert!(response.contains("(integer) 2"));
 
     let response = send_command("GET counter");
-    assert!(response.contains("\"2\""));
+    assert!(response.contains("2"));
 
     stop_server(&mut server);
 }

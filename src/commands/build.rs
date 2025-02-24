@@ -1,23 +1,31 @@
+use crate::errors::SiderError;
 use crate::types::{Command, CommandArgs, CommandType};
 use indexmap::IndexMap;
 
-pub fn build_pong_command() -> Command {
-    Command {
+pub fn build_docs_command() -> Result<Command, SiderError> {
+    Ok(Command {
+        command_type: CommandType::DOCS,
+        args: CommandArgs::NoArgs,
+    })
+}
+
+pub fn build_pong_command() -> Result<Command, SiderError> {
+    Ok(Command {
         command_type: CommandType::PONG,
         args: CommandArgs::NoArgs,
-    }
+    })
 }
 
-pub fn build_flush_db_command() -> Command {
-    Command {
+pub fn build_flush_db_command() -> Result<Command, SiderError> {
+    Ok(Command {
         command_type: CommandType::FLUSHDB,
         args: CommandArgs::NoArgs,
-    }
+    })
 }
 
-pub fn build_get_command(args: &[String]) -> Result<Command, String> {
+pub fn build_get_command(args: &[String]) -> Result<Command, SiderError> {
     if args.is_empty() {
-        return Err("ERR wrong number of arguments".to_string());
+        return Err(SiderError::WrongNumberArgs);
     }
     Ok(Command {
         command_type: CommandType::GET,
@@ -25,9 +33,9 @@ pub fn build_get_command(args: &[String]) -> Result<Command, String> {
     })
 }
 
-pub fn build_keys_command(args: &[String]) -> Result<Command, String> {
+pub fn build_keys_command(args: &[String]) -> Result<Command, SiderError> {
     if args.is_empty() {
-        return Err("ERR wrong number of arguments".to_string());
+        return Err(SiderError::WrongNumberArgs);
     }
     Ok(Command {
         command_type: CommandType::KEYS,
@@ -35,9 +43,9 @@ pub fn build_keys_command(args: &[String]) -> Result<Command, String> {
     })
 }
 
-pub fn build_set_command(args: &[String]) -> Result<Command, String> {
+pub fn build_set_command(args: &[String]) -> Result<Command, SiderError> {
     if args.len() != 2 {
-        return Err("ERR wrong number of arguments".to_string());
+        return Err(SiderError::WrongNumberArgs);
     }
     Ok(Command {
         command_type: CommandType::SET,
@@ -48,9 +56,9 @@ pub fn build_set_command(args: &[String]) -> Result<Command, String> {
     })
 }
 
-pub fn build_delete_command(args: &[String]) -> Result<Command, String> {
+pub fn build_delete_command(args: &[String]) -> Result<Command, SiderError> {
     if args.is_empty() {
-        return Err("ERR wrong number of arguments".to_string());
+        return Err(SiderError::WrongNumberArgs);
     }
     Ok(Command {
         command_type: CommandType::DEL,
@@ -58,9 +66,9 @@ pub fn build_delete_command(args: &[String]) -> Result<Command, String> {
     })
 }
 
-pub fn build_exists_command(args: &[String]) -> Result<Command, String> {
+pub fn build_exists_command(args: &[String]) -> Result<Command, SiderError> {
     if args.is_empty() {
-        return Err("ERR wrong number of arguments".to_string());
+        return Err(SiderError::WrongNumberArgs);
     }
     Ok(Command {
         command_type: CommandType::EXISTS,
@@ -68,9 +76,9 @@ pub fn build_exists_command(args: &[String]) -> Result<Command, String> {
     })
 }
 
-pub fn build_expire_command(args: &[String]) -> Result<Command, String> {
+pub fn build_expire_command(args: &[String]) -> Result<Command, SiderError> {
     if args.len() < 2 {
-        return Err("ERR wrong number of arguments".to_string());
+        return Err(SiderError::WrongNumberArgs);
     }
 
     Ok(Command {
@@ -82,9 +90,9 @@ pub fn build_expire_command(args: &[String]) -> Result<Command, String> {
     })
 }
 
-pub fn build_ttl_command(args: &[String]) -> Result<Command, String> {
+pub fn build_ttl_command(args: &[String]) -> Result<Command, SiderError> {
     if args.is_empty() {
-        return Err("ERR wrong number of arguments".to_string());
+        return Err(SiderError::WrongNumberArgs);
     }
     Ok(Command {
         command_type: CommandType::TTL,
@@ -92,9 +100,9 @@ pub fn build_ttl_command(args: &[String]) -> Result<Command, String> {
     })
 }
 
-pub fn build_incr_command(args: &[String]) -> Result<Command, String> {
+pub fn build_incr_command(args: &[String]) -> Result<Command, SiderError> {
     if args.is_empty() {
-        return Err("ERR wrong number of arguments".to_string());
+        return Err(SiderError::WrongNumberArgs);
     }
     Ok(Command {
         command_type: CommandType::INCR,
@@ -102,9 +110,9 @@ pub fn build_incr_command(args: &[String]) -> Result<Command, String> {
     })
 }
 
-pub fn build_decr_command(args: &[String]) -> Result<Command, String> {
+pub fn build_decr_command(args: &[String]) -> Result<Command, SiderError> {
     if args.is_empty() {
-        return Err("ERR wrong number of arguments".to_string());
+        return Err(SiderError::WrongNumberArgs);
     }
     Ok(Command {
         command_type: CommandType::DECR,
@@ -112,9 +120,9 @@ pub fn build_decr_command(args: &[String]) -> Result<Command, String> {
     })
 }
 
-pub fn build_incrby_command(args: &[String]) -> Result<Command, String> {
+pub fn build_incrby_command(args: &[String]) -> Result<Command, SiderError> {
     if args.len() < 2 {
-        return Err("ERR wrong number of arguments".to_string());
+        return Err(SiderError::WrongNumberArgs);
     }
 
     Ok(Command {
@@ -126,7 +134,7 @@ pub fn build_incrby_command(args: &[String]) -> Result<Command, String> {
     })
 }
 
-fn build_push_command(args: &[String], cmd_type: CommandType) -> Result<Command, String> {
+fn build_push_command(args: &[String], cmd_type: CommandType) -> Result<Command, SiderError> {
     Ok(Command {
         command_type: cmd_type,
         args: CommandArgs::KeyWithValues {
@@ -136,17 +144,17 @@ fn build_push_command(args: &[String], cmd_type: CommandType) -> Result<Command,
     })
 }
 
-pub fn build_lpush_command(args: &[String]) -> Result<Command, String> {
+pub fn build_lpush_command(args: &[String]) -> Result<Command, SiderError> {
     build_push_command(args, CommandType::LPUSH)
 }
 
-pub fn build_rpush_command(args: &[String]) -> Result<Command, String> {
+pub fn build_rpush_command(args: &[String]) -> Result<Command, SiderError> {
     build_push_command(args, CommandType::RPUSH)
 }
 
-pub fn build_lrange_command(args: &[String]) -> Result<Command, String> {
+pub fn build_lrange_command(args: &[String]) -> Result<Command, SiderError> {
     if args.len() < 3 {
-        return Err("ERR wrong number of arguments".to_string());
+        return Err(SiderError::WrongNumberArgs);
     }
 
     Ok(Command {
@@ -158,16 +166,19 @@ pub fn build_lrange_command(args: &[String]) -> Result<Command, String> {
     })
 }
 
-pub fn build_lpop_command(args: &[String]) -> Result<Command, String> {
+pub fn build_lpop_command(args: &[String]) -> Result<Command, SiderError> {
     build_lpop_rpop_command(args, CommandType::LPOP)
 }
-pub fn build_rpop_command(args: &[String]) -> Result<Command, String> {
+pub fn build_rpop_command(args: &[String]) -> Result<Command, SiderError> {
     build_lpop_rpop_command(args, CommandType::RPOP)
 }
 
-fn build_lpop_rpop_command(args: &[String], cmd_type: CommandType) -> Result<Command, String> {
+fn build_lpop_rpop_command(
+    args: &[String],
+    cmd_type: CommandType,
+) -> Result<Command, SiderError> {
     if args.is_empty() {
-        return Err("ERR wrong number of arguments".to_string());
+        return Err(SiderError::WrongNumberArgs);
     }
 
     let command = if args.len() == 1 {
@@ -188,9 +199,9 @@ fn build_lpop_rpop_command(args: &[String], cmd_type: CommandType) -> Result<Com
     Ok(command)
 }
 
-pub fn build_hset_command(args: &[String]) -> Result<Command, String> {
+pub fn build_hset_command(args: &[String]) -> Result<Command, SiderError> {
     if args.len() < 3 || args.len() % 2 == 0 {
-        return Err("ERR wrong number of arguments".to_string());
+        return Err(SiderError::WrongNumberArgs);
     }
 
     let key = args[0].clone();
@@ -207,9 +218,9 @@ pub fn build_hset_command(args: &[String]) -> Result<Command, String> {
     })
 }
 
-pub fn build_hget_command(args: &[String]) -> Result<Command, String> {
+pub fn build_hget_command(args: &[String]) -> Result<Command, SiderError> {
     if args.len() != 2 {
-        return Err("ERR wrong number of arguments".to_string());
+        return Err(SiderError::WrongNumberArgs);
     }
 
     Ok(Command {
@@ -221,9 +232,9 @@ pub fn build_hget_command(args: &[String]) -> Result<Command, String> {
     })
 }
 
-pub fn build_hgetall_command(args: &[String]) -> Result<Command, String> {
+pub fn build_hgetall_command(args: &[String]) -> Result<Command, SiderError> {
     if args.is_empty() {
-        return Err("ERR wrong number of arguments".to_string());
+        return Err(SiderError::WrongNumberArgs);
     }
 
     Ok(Command {
@@ -232,9 +243,9 @@ pub fn build_hgetall_command(args: &[String]) -> Result<Command, String> {
     })
 }
 
-pub fn build_hdel_command(args: &[String]) -> Result<Command, String> {
+pub fn build_hdel_command(args: &[String]) -> Result<Command, SiderError> {
     if args.len() < 2 {
-        return Err("ERR wrong number of arguments".to_string());
+        return Err(SiderError::WrongNumberArgs);
     }
 
     Ok(Command {

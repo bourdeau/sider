@@ -27,7 +27,7 @@ mod tests {
         };
 
         let result = hset(&db, command).await.unwrap().to_string();
-        assert_eq!(result, "(integer) 2\n");
+        assert_eq!(result, "+(integer) 2\r\n");
 
         let db_read = db.read().await;
         assert!(db_read.contains_key("user:1"));
@@ -47,7 +47,7 @@ mod tests {
         };
 
         let result = hset(&db, command).await.unwrap().to_string();
-        assert_eq!(result, "(integer) 1\n");
+        assert_eq!(result, "+(integer) 1\r\n");
 
         let fields = IndexMap::from([("age".to_string(), "30".to_string())]);
         let command = Command {
@@ -59,7 +59,7 @@ mod tests {
         };
 
         let result = hset(&db, command).await.unwrap().to_string();
-        assert_eq!(result, "(integer) 1\n");
+        assert_eq!(result, "+(integer) 1\r\n");
 
         let db_read = db.read().await;
         let stored_hash = match db_read.get("user:2") {
@@ -90,7 +90,7 @@ mod tests {
         };
 
         let result = hset(&db, command).await.unwrap().to_string();
-        assert_eq!(result, "(integer) 3\n");
+        assert_eq!(result, "+(integer) 3\r\n");
 
         let command = Command {
             command_type: CommandType::HDEL,
@@ -101,7 +101,7 @@ mod tests {
         };
 
         let result = hdel(&db, command).await.unwrap().to_string();
-        assert!(result.contains("(integer) 2"));
+        assert_eq!(result, "+(integer) 2\r\n");
 
         let command = Command {
             command_type: CommandType::HDEL,
@@ -112,7 +112,7 @@ mod tests {
         };
 
         let result = hdel(&db, command).await.unwrap().to_string();
-        assert_eq!(result, "(integer) 0\n");
+        assert_eq!(result, "+(integer) 0\r\n");
 
         let command = Command {
             command_type: CommandType::HDEL,
@@ -123,7 +123,7 @@ mod tests {
         };
 
         let result = hdel(&db, command).await.unwrap().to_string();
-        assert_eq!(result, "(integer) 0\n");
+        assert_eq!(result, "+(integer) 0\r\n");
 
         let command = Command {
             command_type: CommandType::HDEL,
@@ -134,7 +134,7 @@ mod tests {
         };
 
         let result = hdel(&db, command).await.unwrap().to_string();
-        assert!(result.contains("(integer) 1"));
+        assert_eq!(result, "+(integer) 1\r\n");
 
         let db_read = db.read().await;
         assert!(!db_read.contains_key("hdelhash"));
