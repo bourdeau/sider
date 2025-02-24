@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/bourdeau/sider/compare/v0.5.1...v0.6.0) (2025-02-24)
+
+
+### Features
+
+* RESP ([#77](https://github.com/bourdeau/sider/issues/77)) ([8d777a0](https://github.com/bourdeau/sider/commit/8d777a0da99014b905f28415d75c4eb36846adc5))
+
 ## [0.5.1](https://github.com/bourdeau/sider/compare/v0.5.0...v0.5.1) (2025-02-18)
 
 
