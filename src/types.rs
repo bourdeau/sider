@@ -34,6 +34,7 @@ pub enum CommandType {
     HGET,
     HGETALL,
     HDEL,
+    CLIENT,
 }
 
 #[derive(Debug, Clone)]

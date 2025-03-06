@@ -40,5 +40,6 @@ pub async fn process_command(
         CommandType::HGET => hget(db, command).await,
         CommandType::HGETALL => hgetall(db, command).await,
         CommandType::HDEL => hdel(db, command).await,
+        CommandType::CLIENT => client().await,
     }
 }
