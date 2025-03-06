@@ -1,34 +1,34 @@
 use crate::errors::SiderError;
 
-pub fn parse_resp_command(resp_command: &str) -> Result<Vec<String>, SiderError> {
-    let mut lines = resp_command.split_terminator("\r\n");
+use regex::Regex;
 
-    let first_line = lines.next().ok_or(SiderError::EmptyRequest)?;
-
-    if !first_line.starts_with('*') {
-        return Err(SiderError::InvalidArrayPrefix);
-    }
-
-    let nb_elements: usize = first_line[1..]
-        .parse()
-        .map_err(|_| SiderError::InvalidArrayLength)?;
-
-    let mut command = Vec::new();
+pub fn parse_resp_command(resp_command: &str) -> Result<Vec<Vec<String>>, SiderError> {
+    let lines = resp_command.split_terminator("\r\n");
+    let mut commands: Vec<Vec<String>> = Vec::new();
+    let mut cmd_nb: Option<usize> = None;
+    let resp_array_regex = Regex::new(r"^\*\d+").expect("Regex error");
 
     for line in lines {
+        if resp_array_regex.is_match(line) {
+            commands.push(Vec::new());
+            cmd_nb = Some(commands.len() - 1);
+            continue;
+        }
+
         if line.starts_with('$') {
             continue;
         }
-        command.push(line.to_string());
+
+        if line.starts_with("COMMAND") {
+            continue;
+        }
+
+        if let Some(idx) = cmd_nb {
+            commands[idx].push(line.to_string());
+        }
     }
 
-    if command.len() != nb_elements {
-        return Err(SiderError::WrongElementCount);
-    }
+    println!("{:?}", commands);
 
-    if command[0] == "COMMAND" {
-        command.remove(0);
-    }
-
-    Ok(command)
+    Ok(commands)
 }

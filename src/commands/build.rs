@@ -256,3 +256,17 @@ pub fn build_hdel_command(args: &[String]) -> Result<Command, SiderError> {
         },
     })
 }
+
+pub fn build_client_command(args: &[String]) -> Result<Command, SiderError> {
+    if args.len() < 2 {
+        return Err(SiderError::WrongNumberArgs);
+    }
+
+    Ok(Command {
+        command_type: CommandType::CLIENT,
+        args: CommandArgs::KeyWithValues {
+            key: args[0].clone(),
+            values: args.iter().skip(1).cloned().collect::<Vec<String>>(),
+        },
+    })
+}

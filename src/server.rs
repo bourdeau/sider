@@ -24,7 +24,7 @@ pub async fn handle_client(mut socket: TcpStream, db: Db) -> Result<(), Box<dyn 
 
         info!(raw_command);
 
-        let parsed = match parse_resp_command(&raw_command) {
+        let parsed_commands = match parse_resp_command(&raw_command) {
             Ok(parsed) => parsed,
             Err(e) => {
                 let error_response = format_redis_error(e);
@@ -35,18 +35,20 @@ pub async fn handle_client(mut socket: TcpStream, db: Db) -> Result<(), Box<dyn 
             }
         };
 
-        match process_command(parsed, &db, false).await {
-            Ok(resp) => {
-                let response = resp.to_string();
-                info!(response);
-                socket.write_all(response.as_bytes()).await?;
-                socket.flush().await?;
-            }
-            Err(e) => {
-                let error_response = format_redis_error(e);
-                warn!(error_response);
-                socket.write_all(error_response.as_bytes()).await?;
-                socket.flush().await?;
+        for parsed in parsed_commands {
+            match process_command(parsed, &db, false).await {
+                Ok(resp) => {
+                    let response = resp.to_string();
+                    info!(response);
+                    socket.write_all(response.as_bytes()).await?;
+                    socket.flush().await?;
+                }
+                Err(e) => {
+                    let error_response = format_redis_error(e);
+                    warn!(error_response);
+                    socket.write_all(error_response.as_bytes()).await?;
+                    socket.flush().await?;
+                }
             }
         }
     }

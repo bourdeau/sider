@@ -37,6 +37,7 @@ pub async fn parse_command(
         "HGET" => build_hget_command(&args),
         "HGETALL" => build_hgetall_command(&args),
         "HDEL" => build_hdel_command(&args),
+        "CLIENT" => build_client_command(&args),
         _ => return Err(SiderError::InvalidCommand),
     }?;
 
