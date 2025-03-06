@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0](https://github.com/bourdeau/sider/compare/v0.6.0...v0.7.0) (2025-03-06)
+
+
+### Features
+
+* Multiplexing ([#79](https://github.com/bourdeau/sider/issues/79)) ([cfe4a22](https://github.com/bourdeau/sider/commit/cfe4a22981225eb433451ffe8eb9d9e6de4abc16))
+
 ## [0.6.0](https://github.com/bourdeau/sider/compare/v0.5.1...v0.6.0) (2025-02-24)
 
 
