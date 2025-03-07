@@ -28,7 +28,5 @@ pub fn parse_resp_command(resp_command: &str) -> Result<Vec<Vec<String>>, SiderE
         }
     }
 
-    println!("{:?}", commands);
-
     Ok(commands)
 }

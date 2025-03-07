@@ -24,3 +24,6 @@ bench-graph:
 
 doc:
   cargo doc --no-deps
+
+benchmark:
+  redis-benchmark -t set,get,incr,lpush,rpush,lpop,rpop,hset,lpush,lrange_100,lrqnge_300,lrange_500,lrange_600 -n 100000 -q
