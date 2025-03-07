@@ -40,7 +40,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     loop {
         let (socket, addr) = listener.accept().await?;
-        info!("New client connected: {}", addr);
 
         let db = Arc::clone(&db);
 
