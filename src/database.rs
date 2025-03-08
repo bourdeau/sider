@@ -21,7 +21,7 @@ pub async fn delete_expired_keys(db: Db) {
 }
 
 pub async fn restore_from_aof(db: Db) {
-    info!("Restoring from AOF file");
+    info!("Restoring DB from AOF file");
     let log_path = get_aof_log_dir();
     let file_path = log_path.join("appendonly.aof");
 
@@ -44,6 +44,7 @@ pub async fn restore_from_aof(db: Db) {
             command.split_whitespace().map(|s| s.to_string()).collect();
 
         let _ = process_command(command_vec, &db, false).await;
-        info!("Restored: {}", command);
     }
+
+    info!("DB restored!");
 }

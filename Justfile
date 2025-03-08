@@ -1,6 +1,11 @@
 start:
   RUST_BACKTRACE=1 cargo run
 
+start-prod:
+  cargo clean
+  cargo build --release
+  ./target/release/sider
+
 fmt:
   cargo check
   cargo fmt
@@ -26,4 +31,5 @@ doc:
   cargo doc --no-deps
 
 benchmark:
+  redis-cli FLUSHDB
   redis-benchmark -t set,get,incr,lpush,rpush,lpop,rpop,hset,lpush,lrange_100,lrqnge_300,lrange_500,lrange_600 -n 100000 -q
