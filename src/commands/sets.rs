@@ -30,3 +30,20 @@ pub async fn sadd(db: &Db, command: Command) -> Result<SiderResponse, SiderError
         Some(_) => Err(SiderError::WrongType),
     }
 }
+
+pub async fn smembers(db: &Db, command: Command) -> Result<SiderResponse, SiderError> {
+    let key_name = match &command.args {
+        CommandArgs::SingleKey(key_name) => key_name,
+        _ => return Err(SiderError::InvalidCommand),
+    };
+
+    let db_read = db.read().await;
+
+    let results = match db_read.get(key_name) {
+        Some(DbValue::SetKey(key)) => key.data.iter().cloned().collect::<Vec<String>>(),
+        None => return Ok(SiderResponse::EmptyArray),
+        Some(_) => return Err(SiderError::WrongType),
+    };
+
+    Ok(SiderResponse::List(results))
+}

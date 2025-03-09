@@ -72,7 +72,6 @@ LRANGE_600 (first 600 elements): 52521.01 requests per second, p50=0.519 msec
 ```
 
 
-
 ## Features
 
 `Sider` implements a basic `Append-Only File (AOF)` system. `AOF` persistence logs every write operation received by the server, allowing these operations to be replayed during startup to restore the original dataset.
@@ -133,9 +132,9 @@ LRANGE_600 (first 600 elements): 52521.01 requests per second, p50=0.519 msec
 
 | Command  | Syntax | Example | Output | Done |
 |----------|--------|---------|--------|------|
-| **SADD**  | `SADD key value` | `SADD online_users "user1"` | `1` |   |
+| **SADD**  | `SADD key value` | `SADD online_users "user1"` | `1` | ✅ |
 | **SREM**  | `SREM key value` | `SREM online_users "user1"` | `1` |   |
-| **SMEMBERS** | `SMEMBERS key` | `SMEMBERS online_users` | `["user2", "user3"]` |   |
+| **SMEMBERS** | `SMEMBERS key` | `SMEMBERS online_users` | `["user2", "user3"]` | ✅ |
 
 
 #### Miscellaneous

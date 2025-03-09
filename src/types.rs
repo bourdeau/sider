@@ -37,6 +37,7 @@ pub enum CommandType {
     HDEL,
     CLIENT,
     SADD,
+    SMEMBERS,
 }
 
 #[derive(Debug, Clone)]
