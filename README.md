@@ -4,9 +4,7 @@
 
 Sider is a Redis-compatible server reimplemented from scratch in Rust. It aims to provide a in-memory key-value store while leveraging Rust’s safety and concurrency features. Currently, Sider is only supported on Linux, with potential cross-platform support planned for the future.
 
-## Context
-
-I make this project for fun; it doesn't aim to replace Redis. For now, I am focusing on implementing common Redis functionalities rather than on performance.
+I make this project for fun, it doesn't aim to replace Redis. For now, I am focusing on implementing common Redis functionalities rather than on performance.
 
 ![Flamegraph](flamegraph.svg)
 
