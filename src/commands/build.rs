@@ -270,3 +270,13 @@ pub fn build_client_command(args: &[String]) -> Result<Command, SiderError> {
         },
     })
 }
+
+pub fn build_sadd_command(args: &[String]) -> Result<Command, SiderError> {
+    Ok(Command {
+        command_type: CommandType::SADD,
+        args: CommandArgs::KeyWithValues {
+            key: args[0].to_string(),
+            values: args.iter().skip(1).cloned().collect::<Vec<String>>(),
+        },
+    })
+}

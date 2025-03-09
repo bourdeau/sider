@@ -1,4 +1,5 @@
 use indexmap::IndexMap;
+use std::collections::HashSet;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
@@ -35,6 +36,7 @@ pub enum CommandType {
     HGETALL,
     HDEL,
     CLIENT,
+    SADD,
 }
 
 #[derive(Debug, Clone)]
@@ -65,12 +67,14 @@ pub struct KeyBase<T> {
 
 pub type Key = KeyBase<Option<String>>;
 pub type KeyList = KeyBase<Vec<String>>;
+pub type KeySet = KeyBase<HashSet<String>>;
 pub type KeyHash = KeyBase<IndexMap<String, String>>;
 
 #[derive(Debug, Clone)]
 pub enum DbValue {
     StringKey(Key),
     ListKey(KeyList),
+    SetKey(KeySet),
     HashKey(KeyHash),
 }
 

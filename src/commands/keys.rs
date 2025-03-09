@@ -230,6 +230,10 @@ pub async fn expire(db: &Db, command: Command) -> Result<SiderResponse, SiderErr
             key.set_ttl(ttl);
             Ok(SiderResponse::Int(1))
         }
+        Some(DbValue::SetKey(key)) => {
+            key.set_ttl(ttl);
+            Ok(SiderResponse::Int(1))
+        }
         Some(DbValue::HashKey(key)) => {
             key.set_ttl(ttl);
             Ok(SiderResponse::Int(1))
