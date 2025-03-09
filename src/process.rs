@@ -43,5 +43,6 @@ pub async fn process_command(
         CommandType::HDEL => hdel(db, command).await,
         CommandType::CLIENT => client().await,
         CommandType::SADD => sadd(db, command).await,
+        CommandType::SMEMBERS => smembers(db, command).await,
     }
 }
