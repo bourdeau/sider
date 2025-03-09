@@ -113,7 +113,7 @@ async fn dump_db_to_aof(db: &Db) -> Result<(), Error> {
                 let values = s
                     .data
                     .iter()
-                    .map(|value| format!("{}", value))
+                    .map(|value| value.to_string())
                     .collect::<Vec<_>>()
                     .join(" ");
                 output.push_str(&format!("SADD {} {}\n", s.name, values));
