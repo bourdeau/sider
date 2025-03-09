@@ -7,6 +7,7 @@ use crate::commands::hashsets::*;
 use crate::commands::keys::*;
 use crate::commands::lists::*;
 use crate::commands::misc::*;
+use crate::commands::sets::*;
 use crate::errors::SiderError;
 use crate::response::SiderResponse;
 
@@ -41,5 +42,6 @@ pub async fn process_command(
         CommandType::HGETALL => hgetall(db, command).await,
         CommandType::HDEL => hdel(db, command).await,
         CommandType::CLIENT => client().await,
+        CommandType::SADD => sadd(db, command).await,
     }
 }

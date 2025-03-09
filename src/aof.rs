@@ -109,6 +109,15 @@ async fn dump_db_to_aof(db: &Db) -> Result<(), Error> {
                 let values = l.data.join(" ");
                 output.push_str(&format!("LPUSH {} {}\n", key, values));
             }
+            DbValue::SetKey(s) => {
+                let values = s
+                    .data
+                    .iter()
+                    .map(|value| value.to_string())
+                    .collect::<Vec<_>>()
+                    .join(" ");
+                output.push_str(&format!("SADD {} {}\n", s.name, values));
+            }
             DbValue::HashKey(hash_key) => {
                 let fields = hash_key
                     .data
