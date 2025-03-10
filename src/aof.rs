@@ -106,7 +106,7 @@ async fn dump_db_to_aof(db: &Db) -> Result<(), Error> {
                 }
             }
             DbValue::ListKey(l) => {
-                let values = l.data.join(" ");
+                let values = l.data.iter().cloned().collect::<Vec<String>>().join(" ");
                 output.push_str(&format!("LPUSH {} {}\n", key, values));
             }
             DbValue::SetKey(s) => {

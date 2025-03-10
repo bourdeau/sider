@@ -2,7 +2,7 @@ use crate::errors::SiderError;
 use crate::response::SiderResponse;
 use crate::types::{Command, CommandArgs, Db, DbValue, KeyList, ListPushType, PopType};
 
-pub async fn push_to_list(
+async fn push_to_list(
     db: &Db,
     command: Command,
     push_type: ListPushType,
@@ -12,7 +12,7 @@ pub async fn push_to_list(
         _ => return Err(SiderError::InvalidCommand),
     };
 
-    let mut new_values = values.clone();
+    let mut new_values = values;
 
     let mut db_write = db.write().await;
 
@@ -20,8 +20,9 @@ pub async fn push_to_list(
         Some(DbValue::ListKey(existing_list)) => {
             match push_type {
                 ListPushType::LPUSH => {
-                    new_values.reverse();
-                    existing_list.data.splice(0..0, new_values);
+                    for value in new_values.into_iter().rev() {
+                        existing_list.data.push_front(value);
+                    }
                 }
                 ListPushType::RPUSH => {
                     existing_list.data.extend(new_values);
@@ -38,7 +39,7 @@ pub async fn push_to_list(
                 key_name.clone(),
                 DbValue::ListKey(KeyList {
                     name: key_name,
-                    data: new_values.clone(),
+                    data: new_values.clone().into(),
                     ..Default::default()
                 }),
             );
@@ -99,7 +100,7 @@ pub async fn lrange(db: &Db, command: Command) -> Result<SiderResponse, SiderErr
         return Ok(SiderResponse::EmptyArray);
     }
 
-    let results: &[String] = &key.data[min..max];
+    let results: Vec<String> = key.data.range(min..max).cloned().collect();
 
     if results.is_empty() {
         return Ok(SiderResponse::EmptyArray);
