@@ -27,9 +27,12 @@ bench:
 bench-graph:
   cargo flamegraph --bench my_benchmark
 
-doc:
-  cargo doc --no-deps
-
 benchmark:
   redis-cli FLUSHDB
   redis-benchmark -t set,get,incr,lpush,rpush,lpop,rpop,hset,lpush,lrange_100,lrqnge_300,lrange_500,lrange_600 -n 100000 -q
+
+bench-start:
+  cargo flamegraph --bin sider
+
+bench-report:
+  perf report --no-children --sort=dso | grep sider
