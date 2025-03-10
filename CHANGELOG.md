@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.1](https://github.com/bourdeau/sider/compare/v0.7.0...v0.7.1) (2025-03-10)
+
+
+### Bug Fixes
+
+* performance for LPUSH ([#93](https://github.com/bourdeau/sider/issues/93)) ([4dfe66c](https://github.com/bourdeau/sider/commit/4dfe66cbe81c75265bc01a014d522cd69f49c32e))
+
 ## [0.7.0](https://github.com/bourdeau/sider/compare/v0.6.0...v0.7.0) (2025-03-10)
 
 

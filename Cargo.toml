@@ -1,6 +1,6 @@
 [package]
 name = "sider"
-version = "0.7.0"
+version = "0.7.1"
 edition = "2021"
 authors = ["Pierre-Henri Bourdeau <phbasic@gmail.com>"]
 readme = "README.md"
