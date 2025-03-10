@@ -1,5 +1,6 @@
 use indexmap::IndexMap;
 use std::collections::HashSet;
+use std::collections::VecDeque;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
@@ -68,7 +69,7 @@ pub struct KeyBase<T> {
 }
 
 pub type Key = KeyBase<Option<String>>;
-pub type KeyList = KeyBase<Vec<String>>;
+pub type KeyList = KeyBase<VecDeque<String>>;
 pub type KeySet = KeyBase<HashSet<String>>;
 pub type KeyHash = KeyBase<IndexMap<String, String>>;
 

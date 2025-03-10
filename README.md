@@ -99,7 +99,7 @@ SET first_name John
 
 ## Benchmark
 
-On average, Sider is 30% slower than Redis, which came as a surprise, as I was expecting much worse performance considering I didn't make any optimizations.
+On average, Sider is 15% slower than Redis, which came as a surprise, as I was expecting much worse performance considering I almost didn't make any optimizations.
 
 On my machine:
 ```
@@ -130,18 +130,17 @@ LRANGE_600 (first 600 elements): 59594.76 requests per second, p50=0.415 msec
 *Sider 0.6.0:*
 
 ```
-➜ redis-benchmark -t set,get,incr,lpush,rpush,lpop,rpop,hset,lpush,lrange_100,lrqnge_300,lrange_500,lrange_600 -n 100000 -q
-WARNING: Could not fetch server CONFIG
-SET: 256410.27 requests per second, p50=0.103 msec
-GET: 348432.06 requests per second, p50=0.079 msec
-INCR: 309597.50 requests per second, p50=0.087 msec
-LPUSH: 86655.11 requests per second, p50=0.575 msec
-RPUSH: 303030.28 requests per second, p50=0.087 msec
-LPOP: 31928.48 requests per second, p50=1.575 msec
-RPOP: 305810.41 requests per second, p50=0.087 msec
-HSET: 303030.28 requests per second, p50=0.087 msec
-LPUSH (needed to benchmark LRANGE): 86880.97 requests per second, p50=0.551 msec
-LRANGE_100 (first 100 elements): 215982.72 requests per second, p50=0.119 msec
-LRANGE_500 (first 500 elements): 64724.92 requests per second, p50=0.399 msec
-LRANGE_600 (first 600 elements): 55309.73 requests per second, p50=0.471 msec
+redis-benchmark -t set,get,incr,lpush,rpush,lpop,rpop,hset,lpush,lrange_100,lrqnge_300,lrange_500,lrange_600 -n 100000 -q
+SET: 264550.28 requests per second, p50=0.103 msec
+GET: 349650.34 requests per second, p50=0.079 msec
+INCR: 307692.31 requests per second, p50=0.087 msec
+LPUSH: 304878.03 requests per second, p50=0.087 msec
+RPUSH: 303951.38 requests per second, p50=0.087 msec
+LPOP: 306748.47 requests per second, p50=0.087 msec
+RPOP: 292397.66 requests per second, p50=0.087 msec
+HSET: 304878.03 requests per second, p50=0.087 msec
+LPUSH (needed to benchmark LRANGE): 303030.28 requests per second, p50=0.087 msec
+LRANGE_100 (first 100 elements): 205761.31 requests per second, p50=0.127 msec
+LRANGE_500 (first 500 elements): 63211.12 requests per second, p50=0.423 msec
+LRANGE_600 (first 600 elements): 54229.93 requests per second, p50=0.495 msec
 ```
