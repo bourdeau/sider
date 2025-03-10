@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.7.0](https://github.com/bourdeau/sider/compare/v0.6.0...v0.7.0) (2025-03-10)
+
+
+### Features
+
+* Multiplexing ([#79](https://github.com/bourdeau/sider/issues/79)) ([cfe4a22](https://github.com/bourdeau/sider/commit/cfe4a22981225eb433451ffe8eb9d9e6de4abc16))
+* SADD ([#86](https://github.com/bourdeau/sider/issues/86)) ([9b84def](https://github.com/bourdeau/sider/commit/9b84def8ee9c345b581e463d25157b31fc64161c))
+* SMEMBERS ([#88](https://github.com/bourdeau/sider/issues/88)) ([fdcc320](https://github.com/bourdeau/sider/commit/fdcc320ccfb3b2924e6db949b7d9ded2dbdfa031))
+* SREM ([#90](https://github.com/bourdeau/sider/issues/90)) ([599a764](https://github.com/bourdeau/sider/commit/599a764a1c7c60d17e52393365383420ac02ee57))
+
+
+### Bug Fixes
+
+* logging DB restore ([#85](https://github.com/bourdeau/sider/issues/85)) ([a9bb69e](https://github.com/bourdeau/sider/commit/a9bb69e0c39b68a835859ba742308ba4cf97076c))
+
 ## [0.6.0](https://github.com/bourdeau/sider/compare/v0.5.1...v0.6.0) (2025-02-24)
 
 
