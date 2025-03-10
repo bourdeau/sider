@@ -47,3 +47,30 @@ pub async fn smembers(db: &Db, command: Command) -> Result<SiderResponse, SiderE
 
     Ok(SiderResponse::List(results))
 }
+
+pub async fn srem(db: &Db, command: Command) -> Result<SiderResponse, SiderError> {
+    let (set_name, members) = match &command.args {
+        CommandArgs::KeyWithValues { key, values } => (key.clone(), values.clone()),
+        _ => return Err(SiderError::InvalidCommand),
+    };
+
+    let mut db_write = db.write().await;
+
+    match db_write.get_mut(&set_name) {
+        Some(DbValue::SetKey(key)) => {
+            let mut deleted_count = 0;
+            for member in members {
+                if key.data.remove(&member) {
+                    deleted_count += 1;
+                }
+            }
+
+            if key.data.is_empty() {
+                db_write.swap_remove(&set_name);
+            }
+            Ok(SiderResponse::Int(deleted_count))
+        }
+        Some(_) => Err(SiderError::WrongType),
+        None => Ok(SiderResponse::Int(0)),
+    }
+}

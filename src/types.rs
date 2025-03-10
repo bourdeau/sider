@@ -38,6 +38,7 @@ pub enum CommandType {
     CLIENT,
     SADD,
     SMEMBERS,
+    SREM,
 }
 
 #[derive(Debug, Clone)]
