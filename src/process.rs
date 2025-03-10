@@ -44,5 +44,6 @@ pub async fn process_command(
         CommandType::CLIENT => client().await,
         CommandType::SADD => sadd(db, command).await,
         CommandType::SMEMBERS => smembers(db, command).await,
+        CommandType::SREM => srem(db, command).await,
     }
 }

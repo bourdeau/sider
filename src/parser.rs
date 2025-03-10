@@ -40,6 +40,7 @@ pub async fn parse_command(
         "CLIENT" => build_client_command(&args),
         "SADD" => build_sadd_command(&args),
         "SMEMBERS" => build_smembers_command(&args),
+        "SREM" => build_srem_command(&args),
         _ => return Err(SiderError::InvalidCommand),
     }?;
 

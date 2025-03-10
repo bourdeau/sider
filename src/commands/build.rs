@@ -295,3 +295,17 @@ pub fn build_smembers_command(args: &[String]) -> Result<Command, SiderError> {
         args: CommandArgs::SingleKey(args[0].to_string()),
     })
 }
+
+pub fn build_srem_command(args: &[String]) -> Result<Command, SiderError> {
+    if args.is_empty() {
+        return Err(SiderError::WrongNumberArgs);
+    }
+
+    Ok(Command {
+        command_type: CommandType::SREM,
+        args: CommandArgs::KeyWithValues {
+            key: args[0].to_string(),
+            values: args.iter().skip(1).cloned().collect::<Vec<String>>(),
+        },
+    })
+}

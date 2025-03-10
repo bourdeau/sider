@@ -36,3 +36,30 @@ fn test_smembers() {
 
     stop_server(&mut server);
 }
+
+#[test]
+fn test_srem() {
+    let mut server = start_server();
+
+    let response = send_command("SADD myset Hello World You Are Lovely");
+    assert!(response.contains("(integer) 5"));
+
+    let response = send_command("SREM myset World Lovely");
+    assert!(response.contains("(integer) 2"));
+
+    let response = send_command("SMEMBERS myset");
+    assert!(!response.contains("World"));
+    assert!(!response.contains("Lovely"));
+
+    assert!(response.contains("Hello"));
+    assert!(response.contains("You"));
+    assert!(response.contains("Are"));
+
+    let response = send_command("SREM myset Hello You Are");
+    assert!(response.contains("(integer) 3"));
+
+    let response = send_command("SMEMBERS myset");
+    assert!(response.contains("(empty array)"));
+
+    stop_server(&mut server);
+}

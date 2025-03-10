@@ -16,8 +16,8 @@ fn benchmark_process_command(c: &mut Criterion) {
                 let db = db.clone();
                 rt.spawn(async move {
                     for i in 0..size {
-                        let command = format!("SET key{} value{}", i, i);
-                        process_command(command.clone(), &db, true).await;
+                        let command = vec!["SET".to_string(), i.to_string(), i.to_string()];
+                        let _ = process_command(command.clone(), &db, true).await;
                     }
                 })
             });
@@ -28,8 +28,8 @@ fn benchmark_process_command(c: &mut Criterion) {
                 let db = db.clone();
                 rt.spawn(async move {
                     for i in 0..size {
-                        let command = format!("GET key{}", i);
-                        process_command(command.clone(), &db, true).await;
+                        let command = vec!["GET".to_string(), i.to_string()];
+                        let _ = process_command(command.clone(), &db, true).await;
                     }
                 })
             });
@@ -40,8 +40,8 @@ fn benchmark_process_command(c: &mut Criterion) {
                 let db = db.clone();
                 rt.spawn(async move {
                     for i in 0..size {
-                        let command = format!("DEL key{}", i);
-                        process_command(command.clone(), &db, true).await;
+                        let command = vec!["DEL".to_string(), i.to_string()];
+                        let _ = process_command(command.clone(), &db, true).await;
                     }
                 })
             });
@@ -54,8 +54,8 @@ fn benchmark_process_command(c: &mut Criterion) {
                 b.to_async(FuturesExecutor).iter(|| {
                     let db = db.clone();
                     rt.spawn(async move {
-                        let command = "KEYS *".to_string();
-                        process_command(command.clone(), &db, true).await;
+                        let command = vec!["KEYS *".to_string()];
+                        let _ = process_command(command.clone(), &db, true).await;
                     })
                 });
             },
