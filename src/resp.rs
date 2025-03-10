@@ -1,25 +1,21 @@
 use crate::errors::SiderError;
 
-use regex::Regex;
-
 pub fn parse_resp_command(resp_command: &str) -> Result<Vec<Vec<String>>, SiderError> {
     let lines = resp_command.split_terminator("\r\n");
     let mut commands: Vec<Vec<String>> = Vec::new();
     let mut cmd_nb: Option<usize> = None;
-    let resp_array_regex = Regex::new(r"^\*\d+").expect("Regex error");
 
     for line in lines {
-        if resp_array_regex.is_match(line) {
-            commands.push(Vec::new());
-            cmd_nb = Some(commands.len() - 1);
-            continue;
+        // Check if the line starts with '*' and is followed immediately by a number
+        if let Some(rest) = line.strip_prefix('*') {
+            if !rest.is_empty() && rest.chars().all(|c| c.is_numeric()) {
+                commands.push(Vec::new());
+                cmd_nb = Some(commands.len() - 1);
+                continue;
+            }
         }
 
         if line.starts_with('$') {
-            continue;
-        }
-
-        if line.starts_with("COMMAND") {
             continue;
         }
 
